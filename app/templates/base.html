@@ -3,14 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>{% block title %}Garage Retreat Chores{% endblock %}</title>
+  <title>{% block title %}Garage Trip Chores{% endblock %}</title>
+  <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&display=swap" />
   <link rel="stylesheet" href="/static/css/app.css" />
 </head>
 <body class="{% block body_class %}{% endblock %}">
   {% block nav %}
   <nav class="topnav">
-    <a class="brand" href="/feed">⛰️ Retreat Chores</a>
+    <a class="brand" href="/feed"><span class="logo">Garage Trip</span> Chores</a>
     <div class="navlinks">
       <a href="/feed" class="{{ 'on' if active=='feed' }}">Chores</a>
       <a href="/manage" class="{{ 'on' if active=='manage' }}">Manage</a>

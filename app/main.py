@@ -1,4 +1,4 @@
-"""FastAPI application entrypoint for the Garage Retreat Chores app."""
+"""FastAPI application entrypoint for the Garage Trip Chores app."""
 from __future__ import annotations
 
 import asyncio
@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
         await upstream.close()
 
 
-app = FastAPI(title="Garage Retreat Chores", lifespan=lifespan)
+app = FastAPI(title="Garage Trip Chores", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.include_router(page_routes.router)
 app.include_router(api_routes.router)

@@ -129,7 +129,7 @@ FUNNY_ACK_MESSAGES = [
     "🧹 {name} is on it like a bonnet!",
     "💪 Absolute legend, {name}. The dishes tremble.",
     "🚀 {name} launched into action!",
-    "🏆 Retreat MVP: {name}!",
+    "🏆 Garage Trip MVP: {name}!",
     "🔥 {name} grabbed it before anyone else could blink.",
     "🧽 Scrub-a-dub, {name} to the rescue!",
     "🥇 {name} just earned some serious chore cred.",

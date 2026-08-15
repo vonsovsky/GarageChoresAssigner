@@ -1,6 +1,6 @@
-# ⛰️ Garage Retreat Chores
+# ⛰️ Garage Trip Chores
 
-A web app for assigning chores during a one-week friends' retreat, designed for
+A web app for assigning chores during the one-week Garage Trip retreat, designed for
 **both mobile and a TV/big screen**. Built on FastAPI + Jinja2 + vanilla JS,
 backed by SQLite, and synced in real time with the upstream
 [Garage Trip Chores API](https://github.com/gdg-garage/garage-trip-chores)

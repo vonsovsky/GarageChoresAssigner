@@ -1,16 +1,20 @@
 :root {
-  --bg: #0f1420;
-  --panel: #1a2233;
-  --panel-2: #222c42;
+  /* Garage Trip brand palette (from garage-trip.cz) */
+  --bg: #22282f;         /* --blue-bg */
+  --bg-dark: #1b1e22;    /* --blue-dark */
+  --panel: #2a313a;
+  --panel-2: #333b45;
   --text: #e8edf7;
-  --muted: #93a1bd;
-  --accent: #4f8cff;
+  --muted: #9aa6b5;
+  --accent: #8430ce;     /* --purple (brand) */
+  --accent-hover: #6a26a5;
+  --discord: #5865f2;    /* --blue-discord */
   --ok: #35c48a;
-  --warn: #ffb020;
+  --warn: #ffc107;
   --urgent: #ff4d5e;
-  --suggest: #7c5cff;
+  --suggest: #8430ce;
   --radius: 14px;
-  --shadow: 0 6px 24px rgba(0, 0, 0, .35);
+  --shadow: 0 6px 24px rgba(0, 0, 0, .45);
 }
 
 * { box-sizing: border-box; }
@@ -18,9 +22,22 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  background: radial-gradient(1200px 800px at 70% -10%, #1c2740, var(--bg));
+  background-color: var(--bg-dark);
+  background-image: url("/static/img/pattern.svg");
+  background-position: 50% 0;
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+  background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
+}
+
+/* Garage Trip wordmark */
+.logo {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 800;
+  font-optical-sizing: auto;
+  color: #fff;
 }
 
 a { color: var(--accent); text-decoration: none; }
@@ -118,7 +135,7 @@ input, select, textarea {
 .empty { text-align: center; color: var(--muted); padding: 40px 0; }
 
 /* ---------- TV dashboard ---------- */
-body.tv { background: #06090f; }
+body.tv { background-color: var(--bg-dark); background-size: 100% auto; }
 .tv-wrap { padding: 24px 32px; }
 .tv-head { display: flex; align-items: baseline; justify-content: space-between; }
 .tv-head h1 { font-size: 2.4rem; }
