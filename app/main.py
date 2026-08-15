@@ -23,10 +23,13 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 async def _poll_loop() -> None:
-    """Fallback refresh so stats/users stay warm even if WS is quiet."""
+    """Fallback refresh so tasks/stats/users stay coherent even if the upstream
+    WebSocket is quiet or an event is missed (e.g. changes made via Discord)."""
     while True:
         await asyncio.sleep(30)
-        await asyncio.gather(upstream.refresh_users(), upstream.refresh_stats())
+        await asyncio.gather(
+            upstream.refresh_tasks(), upstream.refresh_users(), upstream.refresh_stats()
+        )
 
 
 @asynccontextmanager

@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Optional
 
 import httpx
@@ -112,6 +113,11 @@ class UpstreamClient:
     async def mark_done(self, task_id: int) -> None:
         resp = await self._http.post(f"/tasks/{task_id}/done")
         resp.raise_for_status()
+        # Reflect completion in the cache immediately so a page refresh is
+        # correct even if the upstream WebSocket event is delayed or missed.
+        task = self.tasks.get(task_id)
+        if task and not task.get("completed"):
+            task["completed"] = datetime.now(timezone.utc).isoformat()
 
     async def schedule(self, task_id: int) -> None:
         resp = await self._http.post(f"/tasks/{task_id}/schedule")
