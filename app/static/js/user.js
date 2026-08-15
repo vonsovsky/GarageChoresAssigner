@@ -1,0 +1,41 @@
+// User detail: chores in progress (top) and completed, live-updated.
+const uid = window.USER_ID;
+
+async function init() {
+  await load();
+  connectWS((msg) => {
+    if (["snapshot", "task_done", "task_claimed", "task_created", "profile_updated"].includes(msg.type)) load();
+  });
+}
+
+async function load() {
+  const d = await API.get(`/api/users/${encodeURIComponent(uid)}`);
+  const head = document.getElementById("head");
+  head.innerHTML = "";
+  head.appendChild(el("div", { class: "card" },
+    el("h1", { style: "margin:.1em 0" }, d.name),
+    d.handle ? el("p", { class: "muted", style: "margin:0" }, "@" + d.handle) : null,
+    el("p", { class: "muted", style: "margin:.4em 0 0" },
+      `${d.performed.length} done · ${fmtMin(d.time_spent_min) || "0 min"} spent · ${d.performing.length} in progress`)));
+
+  renderList("performing", d.performing, "Not working on anything right now.");
+  renderList("performed", d.performed, "Nothing completed yet.");
+}
+
+function renderList(id, chores, emptyMsg) {
+  const box = document.getElementById(id);
+  box.innerHTML = "";
+  if (!chores.length) { box.appendChild(el("p", { class: "muted" }, emptyMsg)); return; }
+  chores.forEach((c) => {
+    const badges = el("div", { class: "badges" },
+      el("span", { class: `badge size-${c.size}` }, `${c.size} · ${fmtMin(c.estimated_time_min)}`),
+      c.urgent && !c.completed ? el("span", { class: "badge urgent" }, "URGENT") : null,
+      ...(c.necessary_capabilities || []).map((s) => el("span", { class: "badge skill" }, s)),
+      c.completed ? el("span", { class: "badge claimed" }, "✓ done") : null);
+    box.appendChild(el("div", { class: `card chore ${c.urgent && !c.completed ? "urgent" : ""} ${c.completed ? "done" : ""}` },
+      el("h3", { style: "margin:0" }, el("a", { href: `/chores/${c.id}`, style: "color:inherit" }, c.name)),
+      badges));
+  });
+}
+
+init();

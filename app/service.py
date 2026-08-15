@@ -100,6 +100,94 @@ def suggestions_for(task_id: int) -> dict[str, Any]:
     return suggest(task, pool)
 
 
+def _person_directory() -> dict[str, dict[str, str]]:
+    """Union of upstream users and local profiles → {discord_id: {name, handle}}."""
+    directory: dict[str, dict[str, str]] = {}
+    for u in upstream.users:
+        did = u.get("discord_id")
+        if did:
+            directory[did] = {"name": u.get("handle") or did, "handle": u.get("handle") or ""}
+    for p in db.all_profiles():
+        did = p["discord_id"]
+        entry = directory.get(did, {})
+        entry["name"] = p["name"]
+        entry["handle"] = p.get("discord_handle") or entry.get("handle", "")
+        directory[did] = entry
+    return directory
+
+
+def _claims_by_user() -> dict[str, list[int]]:
+    per_user: dict[str, list[int]] = {}
+    for task_id, cids in db.all_claims().items():
+        for cid in cids:
+            per_user.setdefault(cid, []).append(task_id)
+    return per_user
+
+
+def leaderboard() -> list[dict[str, Any]]:
+    """One row per known person: chores performed (completed & claimed), time
+    spent on them, and how many are still in progress."""
+    directory = _person_directory()
+    per_user = _claims_by_user()
+    # include anyone who has claims even if their profile/user is gone
+    for did in per_user:
+        directory.setdefault(did, {"name": did, "handle": ""})
+
+    rows: list[dict[str, Any]] = []
+    for did, info in directory.items():
+        performing = performed = time_spent = 0
+        for task_id in per_user.get(did, []):
+            task = upstream.tasks.get(task_id)
+            if not task or task.get("cancelled"):
+                continue
+            if task.get("completed"):
+                performed += 1
+                time_spent += task.get("estimated_time_min", 0)
+            else:
+                performing += 1
+        rows.append(
+            {
+                "discord_id": did,
+                "name": info.get("name") or did,
+                "handle": info.get("handle") or "",
+                "performed_count": performed,
+                "performing_count": performing,
+                "time_spent_min": time_spent,
+            }
+        )
+    # default order: most time spent first
+    rows.sort(key=lambda r: (-r["time_spent_min"], -r["performed_count"], r["name"].lower()))
+    return rows
+
+
+def user_detail(discord_id: str) -> dict[str, Any]:
+    """A person's chores: those in progress (on top) and those completed."""
+    directory = _person_directory()
+    info = directory.get(discord_id, {"name": discord_id, "handle": ""})
+    task_ids = _claims_by_user().get(discord_id, [])
+
+    performing: list[dict[str, Any]] = []
+    performed: list[dict[str, Any]] = []
+    for task_id in task_ids:
+        task = upstream.tasks.get(task_id)
+        if not task or task.get("cancelled"):
+            continue
+        view = build_chore_view(task)
+        (performed if task.get("completed") else performing).append(view)
+
+    performing.sort(key=lambda v: (not v["urgent"], v.get("created") or ""))
+    performed.sort(key=lambda v: v.get("completed") or "", reverse=True)
+
+    return {
+        "discord_id": discord_id,
+        "name": info.get("name") or discord_id,
+        "handle": info.get("handle") or "",
+        "performing": performing,
+        "performed": performed,
+        "time_spent_min": sum(v["estimated_time_min"] for v in performed),
+    }
+
+
 def snapshot() -> dict[str, Any]:
     """Full initial payload sent to a client right after it connects."""
     chores = list_chore_views()

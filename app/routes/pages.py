@@ -40,3 +40,15 @@ async def chore_detail(request: Request, task_id: int):
     return templates.TemplateResponse(
         request, "chore.html", {"active": "feed", "task_id": task_id}
     )
+
+
+@router.get("/leaderboard")
+async def leaderboard(request: Request):
+    return templates.TemplateResponse(request, "leaderboard.html", {"active": "leaderboard"})
+
+
+@router.get("/users/{user_id:path}")
+async def user_detail(request: Request, user_id: str):
+    return templates.TemplateResponse(
+        request, "user.html", {"active": "leaderboard", "user_id": user_id}
+    )

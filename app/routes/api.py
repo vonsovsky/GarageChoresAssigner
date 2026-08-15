@@ -135,6 +135,16 @@ async def people():
     return {"people": pool, "children_count": settings.CHILDREN_COUNT}
 
 
+@router.get("/leaderboard")
+async def leaderboard():
+    return {"rows": service.leaderboard()}
+
+
+@router.get("/users/{user_id:path}")
+async def user_detail(user_id: str):
+    return service.user_detail(user_id)
+
+
 # --- chores -----------------------------------------------------------------
 
 @router.get("/chores")
