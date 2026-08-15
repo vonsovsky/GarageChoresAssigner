@@ -25,6 +25,7 @@ async function init() {
 
   document.getElementById("profile-form").addEventListener("submit", save);
   document.getElementById("manual-form").addEventListener("submit", addManual);
+  document.getElementById("signout").addEventListener("click", signOut);
   await Promise.all([loadWorkload(), loadManual()]);
 }
 
@@ -43,6 +44,11 @@ async function save(ev) {
   };
   try { await API.put("/api/me", body); showToast("Profile saved ✓"); loadWorkload(); }
   catch (e) { showToast("Error: " + e.message); }
+}
+
+async function signOut() {
+  try { await API.post("/api/logout"); } catch {}
+  location.href = "/";
 }
 
 async function loadWorkload() {

@@ -4,9 +4,15 @@
 {% block content %}
 <div class="card" style="margin-top:40px">
   <h1>⛰️ Welcome to <span class="logo">Garage Trip</span></h1>
-  <p class="muted">Tell us who you are so we can hand you the right chores. You can change all of this later in your profile.</p>
+
+  <div class="chiprow" style="margin-bottom:12px">
+    <div class="chip on" id="tab-join">I'm new — join</div>
+    <div class="chip" id="tab-login">I've been here — sign in</div>
+  </div>
 
   <form id="join-form">
+    <p class="muted">Tell us who you are so we can hand you the right chores. You can change all of this later in your profile.</p>
+
     <label for="name">Your name</label>
     <input id="name" name="name" placeholder="e.g. Jakub" required />
 
@@ -22,6 +28,14 @@
     <p class="muted" style="font-size:.82rem">Watching the little ones? Lower this so you don't get overloaded.</p>
 
     <button type="submit" style="width:100%;margin-top:16px">Join Garage Trip →</button>
+  </form>
+
+  <form id="login-form" hidden>
+    <p class="muted">Welcome back! Enter your Discord username to pick up where you left off.</p>
+    <label for="login-handle">Discord username</label>
+    <input id="login-handle" name="login-handle" placeholder="e.g. jakub_v" required />
+    <p class="muted" id="login-note" style="font-size:.82rem;margin:.4em 0 0"></p>
+    <button type="submit" style="width:100%;margin-top:16px">Sign in →</button>
   </form>
 </div>
 {% endblock %}

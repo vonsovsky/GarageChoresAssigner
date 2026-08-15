@@ -20,6 +20,29 @@ async function init() {
   cap.addEventListener("input", () => (capVal.textContent = cap.value));
 
   document.getElementById("join-form").addEventListener("submit", submit);
+  document.getElementById("login-form").addEventListener("submit", signIn);
+  document.getElementById("tab-join").addEventListener("click", () => showTab("join"));
+  document.getElementById("tab-login").addEventListener("click", () => showTab("login"));
+}
+
+function showTab(which) {
+  const login = which === "login";
+  document.getElementById("join-form").hidden = login;
+  document.getElementById("login-form").hidden = !login;
+  document.getElementById("tab-join").classList.toggle("on", !login);
+  document.getElementById("tab-login").classList.toggle("on", login);
+}
+
+async function signIn(ev) {
+  ev.preventDefault();
+  const discord_handle = document.getElementById("login-handle").value.trim();
+  try {
+    await API.post("/api/login", { discord_handle });
+    location.href = "/feed";
+  } catch (e) {
+    document.getElementById("login-note").textContent =
+      e.message.includes("please join") ? "We don't know that username yet — switch to “join” to create your profile." : "Error: " + e.message;
+  }
 }
 
 function toggle(chip, skill) {

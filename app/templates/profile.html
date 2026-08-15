@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Profile — Garage Trip{% endblock %}
 {% block content %}
-<h1>Your profile</h1>
+<div class="row" style="display:flex;justify-content:space-between;align-items:center">
+  <h1 style="margin:0">Your profile</h1>
+  <button id="signout" class="ghost small">Sign out</button>
+</div>
 
 <div class="card">
   <form id="profile-form">

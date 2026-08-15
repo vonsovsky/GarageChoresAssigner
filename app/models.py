@@ -30,3 +30,7 @@ class ChoreCreateIn(BaseModel):
 class ManualWorkIn(BaseModel):
     description: str = Field(min_length=1, max_length=200)
     minutes: int = Field(ge=1, le=1000)
+
+
+class LoginIn(BaseModel):
+    discord_handle: str = Field(min_length=1, max_length=80)

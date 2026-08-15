@@ -16,7 +16,7 @@ from ..catalog import (
     template_time,
 )
 from ..config import settings
-from ..models import ChoreCreateIn, ManualWorkIn, ProfileIn
+from ..models import ChoreCreateIn, LoginIn, ManualWorkIn, ProfileIn
 from ..suggestions import build_person_pool
 from ..upstream import upstream
 
@@ -56,6 +56,27 @@ async def register(body: ProfileIn, response: Response):
     response.set_cookie(COOKIE, discord_id, max_age=60 * 60 * 24 * 14, samesite="lax")
     await service.broadcast_local({"type": "profile_updated", "discord_id": discord_id})
     return {"profile": profile, "discord_id": discord_id, "matched_upstream": not discord_id.startswith("handle:")}
+
+
+@router.post("/login")
+async def login(body: LoginIn, response: Response):
+    """Sign an existing user back in by their Discord username (restores the
+    session cookie for a returning/new-device/cleared-cookie visitor)."""
+    profile = db.get_profile_by_handle(body.discord_handle)
+    if not profile:
+        raise HTTPException(
+            status_code=404,
+            detail="No profile for that Discord username yet — please join first.",
+        )
+    discord_id = profile["discord_id"]
+    response.set_cookie(COOKIE, discord_id, max_age=60 * 60 * 24 * 14, samesite="lax")
+    return {"profile": profile, "discord_id": discord_id}
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(COOKIE)
+    return {"ok": True}
 
 
 @router.get("/me")
