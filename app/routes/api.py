@@ -126,6 +126,14 @@ async def chores():
     }
 
 
+@router.get("/chores/{task_id}")
+async def get_chore(task_id: int):
+    task = upstream.tasks.get(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Unknown chore")
+    return {"chore": service.build_chore_view(task), "suggestions": service.suggestions_for(task_id)}
+
+
 @router.get("/chores/{task_id}/suggestions")
 async def chore_suggestions(task_id: int):
     return service.suggestions_for(task_id)

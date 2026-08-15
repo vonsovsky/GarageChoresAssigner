@@ -79,7 +79,7 @@ function choreCard(c) {
   const done = el("button", { class: "ghost small", onclick: () => markDone(c.id) }, "Mark done");
 
   const card = el("div", { class: `card chore ${c.urgent ? "urgent" : ""} ${suggested ? "suggested" : ""}` },
-    el("h3", {}, c.name),
+    el("h3", {}, el("a", { href: `/chores/${c.id}`, style: "color:inherit" }, c.name)),
     badges,
     claimers,
     el("div", { class: "row", style: "margin-top:12px;gap:8px" }, btn, done),

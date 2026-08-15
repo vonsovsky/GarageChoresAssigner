@@ -33,3 +33,10 @@ async def manage(request: Request):
 @router.get("/dashboard")
 async def dashboard(request: Request):
     return templates.TemplateResponse(request, "dashboard.html", {"active": "dashboard"})
+
+
+@router.get("/chores/{task_id}")
+async def chore_detail(request: Request, task_id: int):
+    return templates.TemplateResponse(
+        request, "chore.html", {"active": "feed", "task_id": task_id}
+    )

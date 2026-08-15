@@ -85,7 +85,7 @@ function render() {
 
 function card(c) {
   return el("div", { class: `card chore ${c.urgent ? "urgent" : ""}` },
-    el("h3", {}, c.name),
+    el("h3", {}, el("a", { href: `/chores/${c.id}`, style: "color:inherit" }, c.name)),
     el("div", { class: "badges" },
       el("span", { class: `badge size-${c.size}` }, `${c.size} · ${fmtMin(c.estimated_time_min)}`),
       c.urgent ? el("span", { class: "badge urgent" }, "URGENT") : null,
