@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Join — Retreat Chores{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<div class="card" style="margin-top:40px">
+  <h1>⛰️ Welcome to the retreat</h1>
+  <p class="muted">Tell us who you are so we can hand you the right chores. You can change all of this later in your profile.</p>
+
+  <form id="join-form">
+    <label for="name">Your name</label>
+    <input id="name" name="name" placeholder="e.g. Jakub" required />
+
+    <label for="handle">Discord username</label>
+    <input id="handle" name="handle" placeholder="e.g. jakub_v" required />
+    <p class="muted" id="match-note" style="font-size:.82rem;margin:.4em 0 0"></p>
+
+    <label>Skill expertise <span class="muted">(needed for some chores)</span></label>
+    <div class="chiprow" id="skills"></div>
+
+    <label for="cap">Max daily capacity: <span id="cap-val">240</span> min</label>
+    <input id="cap" name="cap" type="range" min="30" max="600" step="30" value="240" />
+    <p class="muted" style="font-size:.82rem">Watching the little ones? Lower this so you don't get overloaded.</p>
+
+    <button type="submit" style="width:100%;margin-top:16px">Join the retreat →</button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/join.js"></script>
+{% endblock %}

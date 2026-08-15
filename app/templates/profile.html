@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Profile — Retreat{% endblock %}
+{% block content %}
+<h1>Your profile</h1>
+
+<div class="card">
+  <form id="profile-form">
+    <label for="name">Name</label>
+    <input id="name" required />
+
+    <label for="handle">Discord username</label>
+    <input id="handle" required />
+
+    <label>Skill expertise</label>
+    <div class="chiprow" id="skills"></div>
+
+    <label for="cap">Max daily capacity: <span id="cap-val"></span> min</label>
+    <input id="cap" type="range" min="30" max="600" step="30" />
+
+    <button type="submit" style="margin-top:14px">Save profile</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Your workload</h2>
+  <p class="muted">Balanced against everyone else — lower means you'll be suggested more.</p>
+  <div id="workload"></div>
+</div>
+
+<div class="card">
+  <h2>Log out-of-scope work</h2>
+  <p class="muted">Did something not on the board (sauna duty, kid wrangling)? Log it so it counts toward your load.</p>
+  <form id="manual-form">
+    <div class="grid2">
+      <div>
+        <label for="desc">What did you do?</label>
+        <input id="desc" placeholder="e.g. Took care of the sauna" required />
+      </div>
+      <div>
+        <label for="mins">Minutes</label>
+        <input id="mins" type="number" min="1" max="1000" value="30" required />
+      </div>
+    </div>
+    <button type="submit" class="secondary" style="margin-top:12px">Add entry</button>
+  </form>
+  <ul id="manual-list" class="leader" style="margin-top:12px"></ul>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/profile.js"></script>
+{% endblock %}
