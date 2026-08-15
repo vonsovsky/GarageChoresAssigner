@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Any
 
 # Canonical expertise/skill strings used as `necessary_capabilities`.
-SKILLS = ["cooking", "grilling", "plumbing", "cleaning", "driving"]
+SKILLS = ["cooking", "grilling", "hookah_master", "cleaning", "driving"]
 
 # Preset chores from the spec. `scales_with_headcount` chores get longer the
 # more mouths there are to feed / dishes to wash (children included).
@@ -83,11 +83,11 @@ CHORE_TEMPLATES: list[dict[str, Any]] = [
     },
     {
         "key": "water-pipe-cleaning",
-        "name": "Water pipe cleaning",
+        "name": "Water pipe (shisha) cleaning",
         "necessary_workers": 1,
         "estimated_time_min": 45,
         "assignment_timeout_min": 20,
-        "necessary_capabilities": ["plumbing"],
+        "necessary_capabilities": ["hookah_master"],
         "scales_with_headcount": False,
         "per_person_min": 0,
     },
