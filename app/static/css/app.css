@@ -164,3 +164,15 @@ table.lb th .arrow { font-size: .9rem; margin-left: 4px; }
 table.lb tr.clickable { cursor: pointer; }
 table.lb tbody tr.clickable:hover { background: var(--panel-2); }
 table.lb tbody tr:last-child td { border-bottom: none; }
+
+/* assignee chips with a remove (✕) button on the chore detail */
+.assignee {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0 6px 6px 0;
+  padding: 4px 6px 4px 12px; border-radius: 999px;
+  background: var(--panel-2); border: 1px solid #38425f; font-weight: 600;
+}
+.assignee-x {
+  background: transparent; color: var(--muted); border: none; cursor: pointer;
+  padding: 0 4px; font-size: .9rem; line-height: 1; border-radius: 999px;
+}
+.assignee-x:hover { color: #fff; background: var(--urgent); }

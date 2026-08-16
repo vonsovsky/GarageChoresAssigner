@@ -279,6 +279,17 @@ async def unclaim_chore(task_id: int, uid: Optional[str] = Cookie(default=None))
     return {"chore": view}
 
 
+@router.post("/chores/{task_id}/unassign")
+async def unassign_chore(task_id: int, body: AssignIn):
+    """Remove a specific person's assignment from a chore (anyone can manage)."""
+    if not body.discord_id:
+        raise HTTPException(status_code=422, detail="discord_id is required")
+    db.remove_claim(task_id, body.discord_id)
+    view = service.build_chore_view(upstream.tasks.get(task_id, {"id": task_id, "necessary_workers": 1}))
+    await service.broadcast_local({"type": "task_claimed", "chore": view, "by": body.discord_id})
+    return {"chore": view}
+
+
 @router.post("/chores/{task_id}/done")
 async def done_chore(task_id: int):
     try:

@@ -43,9 +43,16 @@ function renderDetail(c) {
   // Assign someone else the best fit, only while workers are still needed.
   const auto = c.fully_claimed ? null : el("button", { class: "secondary", onclick: (e) => autoAssign(e.target) }, "🎯 Auto-assign best fit");
 
-  const claimers = (c.claimers || []).length
-    ? el("p", { class: "muted" }, "On it: " + c.claimers.map((p) => p.name).join(", "))
-    : el("p", { class: "muted" }, "Nobody yet — be the hero.");
+  let claimers;
+  if ((c.claimers || []).length) {
+    claimers = el("div", { style: "margin:.4em 0" },
+      el("span", { class: "muted" }, "On it: "),
+      ...c.claimers.map((p) => el("span", { class: "assignee" },
+        p.name,
+        el("button", { class: "assignee-x", title: "Remove assignment", onclick: () => unassign(p.discord_id, p.name) }, "✕"))));
+  } else {
+    claimers = el("p", { class: "muted" }, "Nobody yet — be the hero.");
+  }
 
   const card = el("div", { class: `card chore ${c.urgent ? "urgent" : ""}` },
     el("h1", { style: "margin:.1em 0" }, c.name),
@@ -98,6 +105,11 @@ async function markDone() {
 }
 async function assignTo(discord_id) {
   try { const r = await API.post(`/api/chores/${id}/assign`, { discord_id }); showToast(r.ack); await load(); }
+  catch (e) { showToast("Error: " + e.message); }
+}
+async function unassign(discord_id, name) {
+  if (!confirm(`Remove ${name} from this chore?`)) return;
+  try { await API.post(`/api/chores/${id}/unassign`, { discord_id }); showToast(`Removed ${name}`); await load(); }
   catch (e) { showToast("Error: " + e.message); }
 }
 async function autoAssign(btn) {
