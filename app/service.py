@@ -46,11 +46,11 @@ def build_chore_view(task: dict[str, Any]) -> dict[str, Any]:
             urgent = True
 
     claimers = db.claims_for_task(task["id"])
-    profiles = {p["discord_id"]: p for p in db.all_profiles()}
+    directory = _person_directory()  # resolves both local profiles and upstream handles
     claimer_views = [
         {
             "discord_id": cid,
-            "name": (profiles.get(cid) or {}).get("name") or cid,
+            "name": (directory.get(cid) or {}).get("name") or cid,
         }
         for cid in claimers
     ]
@@ -114,6 +114,11 @@ def _person_directory() -> dict[str, dict[str, str]]:
         entry["handle"] = p.get("discord_handle") or entry.get("handle", "")
         directory[did] = entry
     return directory
+
+
+def person_name(discord_id: str) -> str:
+    info = _person_directory().get(discord_id)
+    return (info or {}).get("name") or discord_id
 
 
 def _claims_by_user() -> dict[str, list[int]]:

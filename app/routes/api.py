@@ -15,7 +15,7 @@ from ..catalog import (
     template_time,
 )
 from ..config import settings
-from ..models import ChoreCreateIn, LoginIn, ManualWorkIn, ProfileIn, TemplateIn
+from ..models import AssignIn, ChoreCreateIn, LoginIn, ManualWorkIn, ProfileIn, TemplateIn
 from ..suggestions import build_person_pool
 from ..upstream import upstream
 
@@ -249,6 +249,25 @@ async def claim_chore(task_id: int, uid: Optional[str] = Cookie(default=None)):
     ack = random.choice(FUNNY_ACK_MESSAGES).format(name=name)
     await service.broadcast_local({"type": "task_claimed", "chore": view, "by": uid})
     return {"ack": ack, "chore": view}
+
+
+@router.post("/chores/{task_id}/assign")
+async def assign_chore(task_id: int, body: AssignIn):
+    """Assign an unclaimed chore to someone else. With no discord_id, auto-assign
+    the lowest-workload eligible person (the top suggestion)."""
+    if task_id not in upstream.tasks:
+        raise HTTPException(status_code=404, detail="Unknown chore")
+    discord_id = body.discord_id
+    if not discord_id:
+        top = service.suggestions_for(task_id)["top"]
+        if not top:
+            raise HTTPException(status_code=409, detail="No eligible person available to auto-assign.")
+        discord_id = top[0]
+    db.add_claim(task_id, discord_id)
+    view = service.build_chore_view(upstream.tasks[task_id])
+    name = service.person_name(discord_id)
+    await service.broadcast_local({"type": "task_claimed", "chore": view, "by": discord_id})
+    return {"chore": view, "assigned": {"discord_id": discord_id, "name": name}, "ack": f"Assigned to {name} ✓"}
 
 
 @router.post("/chores/{task_id}/unclaim")

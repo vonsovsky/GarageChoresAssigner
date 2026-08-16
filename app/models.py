@@ -36,6 +36,11 @@ class LoginIn(BaseModel):
     discord_handle: str = Field(min_length=1, max_length=80)
 
 
+class AssignIn(BaseModel):
+    # None → auto-assign the lowest-workload eligible person
+    discord_id: Optional[str] = None
+
+
 class TemplateIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     necessary_workers: int = Field(default=1, ge=1, le=20)

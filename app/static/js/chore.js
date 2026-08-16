@@ -40,6 +40,8 @@ function renderDetail(c) {
     ? el("button", { class: "secondary", onclick: unclaim }, "✓ You're on it — tap to drop")
     : el("button", { onclick: (e) => claim(e.target) }, "Claim it");
   const done = el("button", { class: "ghost", onclick: markDone }, "Mark done");
+  // Assign someone else the best fit, only while workers are still needed.
+  const auto = c.fully_claimed ? null : el("button", { class: "secondary", onclick: (e) => autoAssign(e.target) }, "🎯 Auto-assign best fit");
 
   const claimers = (c.claimers || []).length
     ? el("p", { class: "muted" }, "On it: " + c.claimers.map((p) => p.name).join(", "))
@@ -48,7 +50,7 @@ function renderDetail(c) {
   const card = el("div", { class: `card chore ${c.urgent ? "urgent" : ""}` },
     el("h1", { style: "margin:.1em 0" }, c.name),
     badges, claimers,
-    el("div", { class: "row", style: "gap:8px;margin-top:12px" }, btn, done),
+    el("div", { class: "row", style: "gap:8px;margin-top:12px;flex-wrap:wrap" }, btn, auto, done),
   );
   const wrap = document.getElementById("detail");
   wrap.innerHTML = ""; wrap.appendChild(card);
@@ -61,18 +63,24 @@ function renderSuggestions(sug, chore) {
   const ranked = sug.ranked || [];
   if (!ranked.length) { list.appendChild(el("li", { class: "muted" }, "No eligible people found.")); return; }
   const max = Math.max(1, ...ranked.map((p) => p.workload_min));
+  const claimerIds = new Set((chore.claimers || []).map((c) => c.discord_id));
   ranked.forEach((p) => {
     const pct = Math.round((p.workload_min / max) * 100);
     const reason = !p.eligible
       ? (chore.necessary_capabilities.some((s) => !(p.capabilities || []).includes(s)) ? "missing skill" : "over capacity")
       : "";
-    list.appendChild(el("li", { style: "opacity:" + (p.eligible ? 1 : 0.45) },
+    // Offer an Assign button for eligible people not already on it, while workers are needed.
+    let action = null;
+    if (claimerIds.has(p.discord_id)) action = el("span", { class: "badge claimed" }, "✓ on it");
+    else if (p.eligible && !chore.fully_claimed) action = el("button", { class: "small secondary", onclick: () => assignTo(p.discord_id) }, "Assign");
+    list.appendChild(el("li", { style: "align-items:center;gap:12px;opacity:" + (p.eligible ? 1 : 0.45) },
       el("div", { style: "flex:1" },
         el("div", { style: "display:flex;justify-content:space-between;align-items:center" },
           el("span", {}, (top.has(p.discord_id) ? "⭐ " : "") + p.name +
             (p.discord_id === myUid ? " (you)" : "")),
           el("span", { class: "muted" }, reason || `${p.workload_min} min`)),
-        el("div", { class: "bar" }, el("span", { style: `width:${pct}%` })))));
+        el("div", { class: "bar" }, el("span", { style: `width:${pct}%` }))),
+      action));
   });
 }
 
@@ -87,6 +95,15 @@ async function unclaim() {
 async function markDone() {
   try { await API.post(`/api/chores/${id}/done`); showToast("Chore done! 🎊"); setTimeout(() => (location.href = "/feed"), 800); }
   catch (e) { showToast("Error: " + e.message); }
+}
+async function assignTo(discord_id) {
+  try { const r = await API.post(`/api/chores/${id}/assign`, { discord_id }); showToast(r.ack); await load(); }
+  catch (e) { showToast("Error: " + e.message); }
+}
+async function autoAssign(btn) {
+  btn.disabled = true;
+  try { const r = await API.post(`/api/chores/${id}/assign`, {}); showToast(r.ack); await load(); }
+  catch (e) { showToast("Error: " + e.message); btn.disabled = false; }
 }
 
 init();
