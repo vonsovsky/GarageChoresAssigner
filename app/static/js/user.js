@@ -12,14 +12,29 @@ async function load() {
   const d = await API.get(`/api/users/${encodeURIComponent(uid)}`);
   const head = document.getElementById("head");
   head.innerHTML = "";
+  const toggle = el("button", { class: d.departed ? "secondary" : "ghost small", onclick: () => setDeparted(!d.departed) },
+    d.departed ? "↩︎ Mark as back" : "🚪 Mark as left early");
   head.appendChild(el("div", { class: "card" },
-    el("h1", { style: "margin:.1em 0" }, d.name),
-    d.handle ? el("p", { class: "muted", style: "margin:0" }, "@" + d.handle) : null,
+    el("div", { class: "row", style: "display:flex;justify-content:space-between;align-items:start;gap:10px" },
+      el("div", {},
+        el("h1", { style: "margin:.1em 0" }, d.name,
+          d.departed ? el("span", { class: "badge", style: "margin-left:10px;vertical-align:middle" }, "🚪 left early") : null),
+        d.handle ? el("p", { class: "muted", style: "margin:0" }, "@" + d.handle) : null),
+      toggle),
+    d.departed ? el("p", { class: "muted", style: "margin:.4em 0 0" }, "Kept on the leaderboard, but no longer suggested or auto-assigned.") : null,
     el("p", { class: "muted", style: "margin:.4em 0 0" },
       `${d.performed.length} done · ${fmtMin(d.time_spent_min) || "0 min"} spent · ${d.performing.length} in progress`)));
 
   renderList("performing", d.performing, "Not working on anything right now.");
   renderList("performed", d.performed, "Nothing completed yet.");
+}
+
+async function setDeparted(departed) {
+  try {
+    await API.post(`/api/users/${encodeURIComponent(uid)}/departure`, { departed });
+    showToast(departed ? "Marked as left early" : "Welcome back!");
+    await load();
+  } catch (e) { showToast("Error: " + e.message); }
 }
 
 function renderList(id, chores, emptyMsg) {

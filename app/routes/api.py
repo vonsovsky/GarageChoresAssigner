@@ -15,7 +15,15 @@ from ..catalog import (
     template_time,
 )
 from ..config import settings
-from ..models import AssignIn, ChoreCreateIn, LoginIn, ManualWorkIn, ProfileIn, TemplateIn
+from ..models import (
+    AssignIn,
+    ChoreCreateIn,
+    DepartureIn,
+    LoginIn,
+    ManualWorkIn,
+    ProfileIn,
+    TemplateIn,
+)
 from ..suggestions import build_person_pool
 from ..upstream import upstream
 
@@ -175,6 +183,15 @@ async def leaderboard():
 @router.get("/users/{user_id:path}")
 async def user_detail(user_id: str):
     return service.user_detail(user_id)
+
+
+@router.post("/users/{user_id:path}/departure")
+async def set_departure(user_id: str, body: DepartureIn):
+    """Mark a person as having left the trip early (or back). Departed people
+    keep their leaderboard history but are no longer suggested or auto-assigned."""
+    db.set_departed(user_id, body.departed)
+    await service.broadcast_local({"type": "profile_updated", "discord_id": user_id})
+    return {"discord_id": user_id, "departed": body.departed}
 
 
 # --- chores -----------------------------------------------------------------

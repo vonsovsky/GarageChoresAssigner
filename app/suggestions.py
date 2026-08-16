@@ -20,15 +20,19 @@ def build_person_pool(
     users: list[dict[str, Any]],
     stats: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Merge upstream users + stats with local profiles into one person list."""
+    """Merge upstream users + stats with local profiles into one person list.
+
+    People marked as having left the trip early are excluded so they are never
+    suggested or auto-assigned (their leaderboard history is unaffected)."""
     profiles = {p["discord_id"]: p for p in db.all_profiles()}
     manual = db.manual_minutes_by_user()
+    departed = db.departed_ids()
     pool: list[dict[str, Any]] = []
 
     seen: set[str] = set()
     for u in users:
         did = u.get("discord_id")
-        if not did:
+        if not did or did in departed:
             continue
         seen.add(did)
         prof = profiles.get(did)
@@ -55,7 +59,7 @@ def build_person_pool(
     # Include people who registered in the app but aren't in the upstream user
     # list yet (provisional "handle:" profiles) so they're still suggestible.
     for did, prof in profiles.items():
-        if did in seen:
+        if did in seen or did in departed:
             continue
         s = stats.get(did, {})
         worked_min = float(s.get("total_min", 0)) + manual.get(did, 0)

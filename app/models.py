@@ -41,6 +41,10 @@ class AssignIn(BaseModel):
     discord_id: Optional[str] = None
 
 
+class DepartureIn(BaseModel):
+    departed: bool
+
+
 class TemplateIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     necessary_workers: int = Field(default=1, ge=1, le=20)

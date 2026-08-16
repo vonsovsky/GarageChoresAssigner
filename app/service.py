@@ -134,6 +134,7 @@ def leaderboard() -> list[dict[str, Any]]:
     spent on them, and how many are still in progress."""
     directory = _person_directory()
     per_user = _claims_by_user()
+    departed = db.departed_ids()
     # include anyone who has claims even if their profile/user is gone
     for did in per_user:
         directory.setdefault(did, {"name": did, "handle": ""})
@@ -158,6 +159,7 @@ def leaderboard() -> list[dict[str, Any]]:
                 "performed_count": performed,
                 "performing_count": performing,
                 "time_spent_min": time_spent,
+                "departed": did in departed,
             }
         )
     # default order: most time spent first
@@ -190,6 +192,7 @@ def user_detail(discord_id: str) -> dict[str, Any]:
         "performing": performing,
         "performed": performed,
         "time_spent_min": sum(v["estimated_time_min"] for v in performed),
+        "departed": discord_id in db.departed_ids(),
     }
 
 

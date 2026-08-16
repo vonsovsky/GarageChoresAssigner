@@ -50,8 +50,11 @@ function render() {
     const active = r.performing_count
       ? el("span", { class: "badge suggest", style: "margin-left:8px" }, `${r.performing_count} in progress`)
       : null;
+    const left = r.departed
+      ? el("span", { class: "badge", style: "margin-left:8px" }, "🚪 left early")
+      : null;
     const tr = el("tr", { class: "clickable", onclick: () => (location.href = `/users/${encodeURIComponent(r.discord_id)}`) },
-      el("td", {}, el("strong", {}, r.name), active),
+      el("td", {}, el("strong", { style: r.departed ? "opacity:.6" : "" }, r.name), left, active),
       el("td", { class: "num" }, String(r.performed_count)),
       el("td", { class: "num" }, fmtMin(r.time_spent_min) || "0 min"));
     tbody.appendChild(tr);

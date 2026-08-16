@@ -66,6 +66,11 @@ CREATE TABLE IF NOT EXISTS claims (
     PRIMARY KEY (task_id, discord_id)
 );
 
+CREATE TABLE IF NOT EXISTS departures (
+    discord_id TEXT PRIMARY KEY,
+    since      TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS templates (
     key                    TEXT PRIMARY KEY,
     name                   TEXT NOT NULL,
@@ -276,6 +281,27 @@ def all_claims() -> dict[int, list[str]]:
     for r in rows:
         out.setdefault(r["task_id"], []).append(r["discord_id"])
     return out
+
+
+# --- departures (people who left the trip early) -----------------------------
+
+def set_departed(discord_id: str, departed: bool) -> None:
+    with _lock:
+        conn = get_conn()
+        if departed:
+            conn.execute(
+                "INSERT OR IGNORE INTO departures (discord_id, since) VALUES (?, ?)",
+                (discord_id, _now()),
+            )
+        else:
+            conn.execute("DELETE FROM departures WHERE discord_id = ?", (discord_id,))
+        conn.commit()
+
+
+def departed_ids() -> set[str]:
+    with _lock:
+        rows = get_conn().execute("SELECT discord_id FROM departures").fetchall()
+    return {r["discord_id"] for r in rows}
 
 
 # --- chore templates --------------------------------------------------------
