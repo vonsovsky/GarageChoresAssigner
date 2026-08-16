@@ -121,6 +121,19 @@ def person_name(discord_id: str) -> str:
     return (info or {}).get("name") or discord_id
 
 
+def release_active_claims(discord_id: str) -> list[dict[str, Any]]:
+    """Drop a person's claims on chores that are still active (not completed or
+    cancelled), so those free up for reassignment. Completed chores are left on
+    their record. Returns the updated views of the affected chores."""
+    affected: list[dict[str, Any]] = []
+    for task_id in _claims_by_user().get(discord_id, []):
+        task = upstream.tasks.get(task_id)
+        if task and _is_active(task):
+            db.remove_claim(task_id, discord_id)
+            affected.append(build_chore_view(task))
+    return affected
+
+
 def _claims_by_user() -> dict[str, list[int]]:
     per_user: dict[str, list[int]] = {}
     for task_id, cids in db.all_claims().items():

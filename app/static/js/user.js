@@ -31,8 +31,10 @@ async function load() {
 
 async function setDeparted(departed) {
   try {
-    await API.post(`/api/users/${encodeURIComponent(uid)}/departure`, { departed });
-    showToast(departed ? "Marked as left early" : "Welcome back!");
+    const r = await API.post(`/api/users/${encodeURIComponent(uid)}/departure`, { departed });
+    showToast(departed
+      ? `Marked as left early${r.released ? ` — released ${r.released} chore(s)` : ""}`
+      : "Welcome back!");
     await load();
   } catch (e) { showToast("Error: " + e.message); }
 }

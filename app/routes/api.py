@@ -188,10 +188,19 @@ async def user_detail(user_id: str):
 @router.post("/users/{user_id:path}/departure")
 async def set_departure(user_id: str, body: DepartureIn):
     """Mark a person as having left the trip early (or back). Departed people
-    keep their leaderboard history but are no longer suggested or auto-assigned."""
+    keep their leaderboard history but are no longer suggested or auto-assigned,
+    and their unfinished chores are released so they can be reassigned."""
     db.set_departed(user_id, body.departed)
+    released = 0
+    if body.departed:
+        for view in service.release_active_claims(user_id):
+            released += 1
+            await service.broadcast_local(
+                {"type": "task_claimed", "chore": view, "by": user_id,
+                 "suggestions": service.suggestions_for(view["id"])["top"]}
+            )
     await service.broadcast_local({"type": "profile_updated", "discord_id": user_id})
-    return {"discord_id": user_id, "departed": body.departed}
+    return {"discord_id": user_id, "departed": body.departed, "released": released}
 
 
 # --- chores -----------------------------------------------------------------
