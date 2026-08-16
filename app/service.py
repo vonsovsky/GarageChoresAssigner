@@ -97,7 +97,9 @@ def suggestions_for(task_id: int) -> dict[str, Any]:
     if not task:
         return {"top": [], "ranked": []}
     pool = build_person_pool(upstream.users, upstream.stats)
-    return suggest(task, pool)
+    claimers = frozenset(db.claims_for_task(task_id))
+    fully_claimed = len(claimers) >= task.get("necessary_workers", 1)
+    return suggest(task, pool, claimed_ids=claimers, fully_claimed=fully_claimed)
 
 
 def _person_directory() -> dict[str, dict[str, str]]:

@@ -273,7 +273,10 @@ async def claim_chore(task_id: int, uid: Optional[str] = Cookie(default=None)):
     profile = db.get_profile(uid)
     name = (profile or {}).get("name", "friend")
     ack = random.choice(FUNNY_ACK_MESSAGES).format(name=name)
-    await service.broadcast_local({"type": "task_claimed", "chore": view, "by": uid})
+    await service.broadcast_local(
+        {"type": "task_claimed", "chore": view, "by": uid,
+         "suggestions": service.suggestions_for(task_id)["top"]}
+    )
     return {"ack": ack, "chore": view}
 
 
@@ -292,7 +295,10 @@ async def assign_chore(task_id: int, body: AssignIn):
     db.add_claim(task_id, discord_id)
     view = service.build_chore_view(upstream.tasks[task_id])
     name = service.person_name(discord_id)
-    await service.broadcast_local({"type": "task_claimed", "chore": view, "by": discord_id})
+    await service.broadcast_local(
+        {"type": "task_claimed", "chore": view, "by": discord_id,
+         "suggestions": service.suggestions_for(task_id)["top"]}
+    )
     return {"chore": view, "assigned": {"discord_id": discord_id, "name": name}, "ack": f"Assigned to {name} ✓"}
 
 
@@ -301,7 +307,10 @@ async def unclaim_chore(task_id: int, uid: Optional[str] = Cookie(default=None))
     uid = _current_uid(uid)
     db.remove_claim(task_id, uid)
     view = service.build_chore_view(upstream.tasks.get(task_id, {"id": task_id, "necessary_workers": 1}))
-    await service.broadcast_local({"type": "task_claimed", "chore": view, "by": uid})
+    await service.broadcast_local(
+        {"type": "task_claimed", "chore": view, "by": uid,
+         "suggestions": service.suggestions_for(task_id)["top"]}
+    )
     return {"chore": view}
 
 
@@ -312,7 +321,10 @@ async def unassign_chore(task_id: int, body: AssignIn):
         raise HTTPException(status_code=422, detail="discord_id is required")
     db.remove_claim(task_id, body.discord_id)
     view = service.build_chore_view(upstream.tasks.get(task_id, {"id": task_id, "necessary_workers": 1}))
-    await service.broadcast_local({"type": "task_claimed", "chore": view, "by": body.discord_id})
+    await service.broadcast_local(
+        {"type": "task_claimed", "chore": view, "by": body.discord_id,
+         "suggestions": service.suggestions_for(task_id)["top"]}
+    )
     return {"chore": view}
 
 

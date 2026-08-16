@@ -110,11 +110,16 @@ def suggest(
     task: dict[str, Any],
     pool: list[dict[str, Any]],
     top_n: int = 3,
+    claimed_ids: frozenset[str] = frozenset(),
+    fully_claimed: bool = False,
 ) -> dict[str, Any]:
     """Return ranked suggestions for a task.
 
     Result: {"top": [...top_n discord_ids...], "ranked": [person, ...]}.
     Each person is annotated with `eligible` and `suggested` flags.
+
+    People already on the chore (`claimed_ids`) are never in `top`, and a
+    `fully_claimed` chore suggests nobody (all worker slots are filled).
     """
     required_caps = task.get("necessary_capabilities") or []
     task_time = task.get("estimated_time_min", 0)
@@ -132,7 +137,12 @@ def suggest(
     # then the upstream normalized metric, then name
     eligible.sort(key=lambda p: (p["workload_min"], p["normalized_total"], p["name"].lower()))
 
-    top_ids = [p["discord_id"] for p in eligible[:top_n]]
+    # Don't suggest people already on the chore, and suggest nobody once it's
+    # fully staffed.
+    if fully_claimed:
+        top_ids: list[str] = []
+    else:
+        top_ids = [p["discord_id"] for p in eligible if p["discord_id"] not in claimed_ids][:top_n]
     for p in annotated:
         p["suggested"] = p["discord_id"] in top_ids
 
