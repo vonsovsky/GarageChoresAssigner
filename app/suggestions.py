@@ -14,6 +14,22 @@ from typing import Any
 
 from . import db
 from .config import settings
+from .upstream import upstream
+
+
+def _committed_minutes() -> dict[str, float]:
+    """Minutes each person has already committed to in-progress chores they've
+    claimed in this app (these never reach the upstream stats), so auto-assign
+    accounts for work someone is already on the hook for."""
+    committed: dict[str, float] = {}
+    for task_id, cids in db.all_claims().items():
+        task = upstream.tasks.get(task_id)
+        if not task or task.get("completed") or task.get("cancelled"):
+            continue
+        est = task.get("estimated_time_min", 0)
+        for cid in cids:
+            committed[cid] = committed.get(cid, 0) + est
+    return committed
 
 
 def build_person_pool(
@@ -27,6 +43,7 @@ def build_person_pool(
     profiles = {p["discord_id"]: p for p in db.all_profiles()}
     manual = db.manual_minutes_by_user()
     departed = db.departed_ids()
+    committed = _committed_minutes()
     pool: list[dict[str, Any]] = []
 
     seen: set[str] = set()
@@ -41,7 +58,7 @@ def build_person_pool(
         caps = set(u.get("capabilities") or [])
         if prof:
             caps |= set(prof.get("skills") or [])
-        worked_min = float(s.get("total_min", 0)) + manual.get(did, 0)
+        worked_min = float(s.get("total_min", 0)) + manual.get(did, 0) + committed.get(did, 0)
         pool.append(
             {
                 "discord_id": did,
@@ -62,7 +79,7 @@ def build_person_pool(
         if did in seen or did in departed:
             continue
         s = stats.get(did, {})
-        worked_min = float(s.get("total_min", 0)) + manual.get(did, 0)
+        worked_min = float(s.get("total_min", 0)) + manual.get(did, 0) + committed.get(did, 0)
         pool.append(
             {
                 "discord_id": did,
@@ -111,8 +128,9 @@ def suggest(
         annotated.append(p)
 
     eligible = [p for p in annotated if p["eligible"]]
-    # rank: lowest workload first (normalized_total), then raw minutes, then name
-    eligible.sort(key=lambda p: (p["normalized_total"], p["workload_min"], p["name"].lower()))
+    # rank: least total workload first (upstream + manual + in-progress claims),
+    # then the upstream normalized metric, then name
+    eligible.sort(key=lambda p: (p["workload_min"], p["normalized_total"], p["name"].lower()))
 
     top_ids = [p["discord_id"] for p in eligible[:top_n]]
     for p in annotated:
