@@ -47,6 +47,11 @@ async def leaderboard(request: Request):
     return templates.TemplateResponse(request, "leaderboard.html", {"active": "leaderboard"})
 
 
+@router.get("/templates")
+async def template_manager(request: Request):
+    return templates.TemplateResponse(request, "templates.html", {"active": "manage"})
+
+
 @router.get("/users/{user_id:path}")
 async def user_detail(request: Request, user_id: str):
     return templates.TemplateResponse(

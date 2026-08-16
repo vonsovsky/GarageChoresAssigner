@@ -2,21 +2,20 @@
 from __future__ import annotations
 
 import random
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Cookie, HTTPException, Response
 
 from .. import db, service
 from ..catalog import (
-    CHORE_TEMPLATES,
     FUNNY_ACK_MESSAGES,
     SKILLS,
-    TEMPLATES_BY_KEY,
     size_for,
     template_time,
 )
 from ..config import settings
-from ..models import ChoreCreateIn, LoginIn, ManualWorkIn, ProfileIn
+from ..models import ChoreCreateIn, LoginIn, ManualWorkIn, ProfileIn, TemplateIn
 from ..suggestions import build_person_pool
 from ..upstream import upstream
 
@@ -118,9 +117,42 @@ async def add_manual(body: ManualWorkIn, uid: Optional[str] = Cookie(default=Non
 
 # --- reference data ---------------------------------------------------------
 
+def _slugify(name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "chore"
+    key = slug
+    n = 2
+    while db.template_key_exists(key):
+        key = f"{slug}-{n}"
+        n += 1
+    return key
+
+
 @router.get("/templates")
 async def templates():
-    return {"templates": CHORE_TEMPLATES}
+    return {"templates": db.all_templates()}
+
+
+@router.post("/templates")
+async def create_template(body: TemplateIn):
+    key = _slugify(body.name)
+    tpl = db.upsert_template(key, body.model_dump())
+    return {"template": tpl}
+
+
+@router.put("/templates/{key}")
+async def update_template(key: str, body: TemplateIn):
+    if not db.template_key_exists(key):
+        raise HTTPException(status_code=404, detail="Unknown template")
+    tpl = db.upsert_template(key, body.model_dump())
+    return {"template": tpl}
+
+
+@router.delete("/templates/{key}")
+async def delete_template(key: str):
+    if not db.template_key_exists(key):
+        raise HTTPException(status_code=404, detail="Unknown template")
+    db.delete_template(key)
+    return {"ok": True}
 
 
 @router.get("/skills")
@@ -172,7 +204,7 @@ async def chore_suggestions(task_id: int):
 
 @router.post("/chores")
 async def create_chore(body: ChoreCreateIn):
-    template = TEMPLATES_BY_KEY.get(body.template_key) if body.template_key else None
+    template = db.get_template(body.template_key) if body.template_key else None
 
     # If created from a template, derive time (with head-count scaling) and caps.
     est = body.estimated_time_min

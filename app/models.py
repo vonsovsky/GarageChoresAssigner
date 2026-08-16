@@ -34,3 +34,13 @@ class ManualWorkIn(BaseModel):
 
 class LoginIn(BaseModel):
     discord_handle: str = Field(min_length=1, max_length=80)
+
+
+class TemplateIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    necessary_workers: int = Field(default=1, ge=1, le=20)
+    estimated_time_min: int = Field(default=10, ge=1, le=1000)
+    assignment_timeout_min: int = Field(default=15, ge=1, le=1000)
+    necessary_capabilities: list[str] = Field(default_factory=list)
+    scales_with_headcount: bool = False
+    per_person_min: int = Field(default=0, ge=0, le=120)

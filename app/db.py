@@ -65,6 +65,18 @@ CREATE TABLE IF NOT EXISTS claims (
     created     TEXT NOT NULL,
     PRIMARY KEY (task_id, discord_id)
 );
+
+CREATE TABLE IF NOT EXISTS templates (
+    key                    TEXT PRIMARY KEY,
+    name                   TEXT NOT NULL,
+    necessary_workers      INTEGER NOT NULL DEFAULT 1,
+    estimated_time_min     INTEGER NOT NULL DEFAULT 10,
+    assignment_timeout_min INTEGER NOT NULL DEFAULT 15,
+    necessary_capabilities TEXT NOT NULL DEFAULT '[]',  -- json array
+    scales_with_headcount  INTEGER NOT NULL DEFAULT 0,
+    per_person_min         INTEGER NOT NULL DEFAULT 0,
+    sort_order             INTEGER NOT NULL DEFAULT 0
+);
 """
 
 
@@ -72,6 +84,32 @@ def init_db() -> None:
     with _lock:
         conn = get_conn()
         conn.executescript(SCHEMA)
+        conn.commit()
+    _seed_templates()
+
+
+def _seed_templates() -> None:
+    """Populate the templates table from the built-in defaults on first run."""
+    from .catalog import CHORE_TEMPLATES
+
+    with _lock:
+        conn = get_conn()
+        if conn.execute("SELECT COUNT(*) FROM templates").fetchone()[0] > 0:
+            return
+        for i, t in enumerate(CHORE_TEMPLATES):
+            conn.execute(
+                """
+                INSERT INTO templates (key, name, necessary_workers, estimated_time_min,
+                    assignment_timeout_min, necessary_capabilities, scales_with_headcount,
+                    per_person_min, sort_order)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    t["key"], t["name"], t["necessary_workers"], t["estimated_time_min"],
+                    t["assignment_timeout_min"], json.dumps(t["necessary_capabilities"]),
+                    1 if t.get("scales_with_headcount") else 0, t.get("per_person_min", 0), i,
+                ),
+            )
         conn.commit()
 
 
@@ -238,3 +276,70 @@ def all_claims() -> dict[int, list[str]]:
     for r in rows:
         out.setdefault(r["task_id"], []).append(r["discord_id"])
     return out
+
+
+# --- chore templates --------------------------------------------------------
+
+def _template_row(row: sqlite3.Row) -> dict[str, Any]:
+    d = dict(row)
+    d["necessary_capabilities"] = json.loads(d.get("necessary_capabilities") or "[]")
+    d["scales_with_headcount"] = bool(d["scales_with_headcount"])
+    return d
+
+
+def all_templates() -> list[dict[str, Any]]:
+    with _lock:
+        rows = get_conn().execute(
+            "SELECT * FROM templates ORDER BY sort_order, name"
+        ).fetchall()
+    return [_template_row(r) for r in rows]
+
+
+def get_template(key: str) -> Optional[dict[str, Any]]:
+    with _lock:
+        row = get_conn().execute("SELECT * FROM templates WHERE key = ?", (key,)).fetchone()
+    return _template_row(row) if row else None
+
+
+def upsert_template(key: str, data: dict[str, Any]) -> dict[str, Any]:
+    with _lock:
+        conn = get_conn()
+        # keep new templates after the existing ones
+        next_order = conn.execute("SELECT COALESCE(MAX(sort_order), -1) + 1 FROM templates").fetchone()[0]
+        conn.execute(
+            """
+            INSERT INTO templates (key, name, necessary_workers, estimated_time_min,
+                assignment_timeout_min, necessary_capabilities, scales_with_headcount,
+                per_person_min, sort_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(key) DO UPDATE SET
+                name=excluded.name,
+                necessary_workers=excluded.necessary_workers,
+                estimated_time_min=excluded.estimated_time_min,
+                assignment_timeout_min=excluded.assignment_timeout_min,
+                necessary_capabilities=excluded.necessary_capabilities,
+                scales_with_headcount=excluded.scales_with_headcount,
+                per_person_min=excluded.per_person_min
+            """,
+            (
+                key, data["name"], data["necessary_workers"], data["estimated_time_min"],
+                data["assignment_timeout_min"], json.dumps(data["necessary_capabilities"]),
+                1 if data["scales_with_headcount"] else 0, data["per_person_min"], next_order,
+            ),
+        )
+        conn.commit()
+    return get_template(key)  # type: ignore[return-value]
+
+
+def delete_template(key: str) -> None:
+    with _lock:
+        conn = get_conn()
+        conn.execute("DELETE FROM templates WHERE key = ?", (key,))
+        conn.commit()
+
+
+def template_key_exists(key: str) -> bool:
+    with _lock:
+        return get_conn().execute(
+            "SELECT 1 FROM templates WHERE key = ?", (key,)
+        ).fetchone() is not None
