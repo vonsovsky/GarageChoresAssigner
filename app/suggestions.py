@@ -25,10 +25,12 @@ def build_person_pool(
     manual = db.manual_minutes_by_user()
     pool: list[dict[str, Any]] = []
 
+    seen: set[str] = set()
     for u in users:
         did = u.get("discord_id")
         if not did:
             continue
+        seen.add(did)
         prof = profiles.get(did)
         s = stats.get(did, {})
         # capabilities are the union of upstream roles and locally-set skills
@@ -47,6 +49,27 @@ def build_person_pool(
                 "normalized_total": float(s.get("normalized_total", 0)),
                 "present_ticks": int(s.get("present_ticks", 0)),
                 "has_profile": prof is not None,
+            }
+        )
+
+    # Include people who registered in the app but aren't in the upstream user
+    # list yet (provisional "handle:" profiles) so they're still suggestible.
+    for did, prof in profiles.items():
+        if did in seen:
+            continue
+        s = stats.get(did, {})
+        worked_min = float(s.get("total_min", 0)) + manual.get(did, 0)
+        pool.append(
+            {
+                "discord_id": did,
+                "name": prof.get("name") or did,
+                "handle": prof.get("discord_handle") or "",
+                "capabilities": sorted(set(prof.get("skills") or [])),
+                "max_capacity_min": prof.get("max_capacity_min", 240),
+                "workload_min": round(worked_min, 1),
+                "normalized_total": float(s.get("normalized_total", 0)),
+                "present_ticks": int(s.get("present_ticks", 0)),
+                "has_profile": True,
             }
         )
     return pool
