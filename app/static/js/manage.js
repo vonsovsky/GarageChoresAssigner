@@ -63,6 +63,8 @@ function recalcFromTemplate() {
 
 async function submit(ev) {
   ev.preventDefault();
+  const btn = ev.submitter || ev.target.querySelector('button[type="submit"]');
+  if (btn && btn.disabled) return;          // guard against rapid double-submits
   const deadlineRaw = document.getElementById("deadline").value;
   const body = {
     name: document.getElementById("name").value.trim(),
@@ -75,11 +77,17 @@ async function submit(ev) {
     template_key: document.getElementById("template_key").value || null,
     headcount: parseInt(document.getElementById("headcount").value, 10) || null,
   };
+  const label = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.textContent = "Posting…"; }
   try {
     await API.post("/api/chores", body);
     showToast("Posted to the board ✓");
     resetForm();
-  } catch (e) { showToast("Error: " + e.message); }
+  } catch (e) {
+    showToast("Error: " + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+  }
 }
 
 function resetForm() {
