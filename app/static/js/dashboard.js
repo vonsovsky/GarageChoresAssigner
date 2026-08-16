@@ -91,7 +91,9 @@ function card(c) {
       c.urgent ? el("span", { class: "badge urgent" }, "URGENT") : null,
       el("span", { class: "badge" }, `${c.claimed_count}/${c.necessary_workers} claimed`),
       ...(c.necessary_capabilities || []).map((s) => el("span", { class: "badge skill" }, s))),
-    (c.claimers || []).length ? el("p", { class: "muted" }, "On it: " + c.claimers.map((p) => p.name).join(", ")) : null);
+    (c.claimers || []).length
+      ? el("p", { class: "on-it" }, "🙌 On it: ", el("strong", {}, c.claimers.map((p) => p.name).join(", ")))
+      : null);
 }
 
 async function loadLeader() {

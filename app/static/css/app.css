@@ -176,3 +176,12 @@ table.lb tbody tr:last-child td { border-bottom: none; }
   padding: 0 4px; font-size: .9rem; line-height: 1; border-radius: 999px;
 }
 .assignee-x:hover { color: #fff; background: var(--urgent); }
+
+/* TV dashboard: make "On it:" prominent */
+.tv .on-it {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #4ea1ff;              /* bright, noticeable blue */
+  margin: 8px 0 0;
+}
+.tv .on-it strong { color: #7dbcff; }
