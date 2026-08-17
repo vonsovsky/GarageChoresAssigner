@@ -283,6 +283,42 @@ def all_claims() -> dict[int, list[str]]:
     return out
 
 
+# --- merge two identities ----------------------------------------------------
+
+def merge_user(from_id: str, to_id: str) -> dict[str, int]:
+    """Fold `from_id` into `to_id`: move claims, manual work and departure onto
+    the canonical id and delete the duplicate profile. Returns counts moved."""
+    with _lock:
+        conn = get_conn()
+        claims = conn.execute(
+            "SELECT COUNT(*) FROM claims WHERE discord_id = ?", (from_id,)
+        ).fetchone()[0]
+        manual = conn.execute(
+            "SELECT COUNT(*) FROM manual_work WHERE discord_id = ?", (from_id,)
+        ).fetchone()[0]
+        # Move claims; skip any the target already holds (PK conflict), then
+        # drop whatever remains under the old id.
+        conn.execute(
+            "UPDATE OR IGNORE claims SET discord_id = ? WHERE discord_id = ?", (to_id, from_id)
+        )
+        conn.execute("DELETE FROM claims WHERE discord_id = ?", (from_id,))
+        conn.execute(
+            "UPDATE manual_work SET discord_id = ? WHERE discord_id = ?", (to_id, from_id)
+        )
+        dep = conn.execute(
+            "SELECT since FROM departures WHERE discord_id = ?", (from_id,)
+        ).fetchone()
+        if dep:
+            conn.execute(
+                "INSERT OR IGNORE INTO departures (discord_id, since) VALUES (?, ?)",
+                (to_id, dep["since"]),
+            )
+            conn.execute("DELETE FROM departures WHERE discord_id = ?", (from_id,))
+        conn.execute("DELETE FROM profiles WHERE discord_id = ?", (from_id,))
+        conn.commit()
+    return {"claims": claims, "manual_work": manual}
+
+
 # --- departures (people who left the trip early) -----------------------------
 
 def set_departed(discord_id: str, departed: bool) -> None:

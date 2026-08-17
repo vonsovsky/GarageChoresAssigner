@@ -32,10 +32,16 @@ router = APIRouter(prefix="/api")
 COOKIE = "uid"
 
 
+def _norm_handle(handle: str) -> str:
+    """Normalise a typed Discord handle: trim spaces and a leading '@'."""
+    return handle.strip().lstrip("@").strip()
+
+
 def _resolve_discord_id(handle: str) -> str:
     """Map a Discord handle to its upstream discord_id when the person has
     already registered through the Discord bot; otherwise use a provisional id
     that reconciles once they appear upstream."""
+    handle = _norm_handle(handle)
     for u in upstream.users:
         if (u.get("handle") or "").lower() == handle.lower():
             return u["discord_id"]
@@ -52,11 +58,12 @@ def _current_uid(uid: Optional[str]) -> str:
 
 @router.post("/register")
 async def register(body: ProfileIn, response: Response):
-    discord_id = _resolve_discord_id(body.discord_handle)
+    handle = _norm_handle(body.discord_handle)
+    discord_id = _resolve_discord_id(handle)
     profile = db.upsert_profile(
         discord_id=discord_id,
         name=body.name,
-        discord_handle=body.discord_handle,
+        discord_handle=handle,
         skills=body.skills,
         max_capacity_min=body.max_capacity_min,
     )
@@ -69,7 +76,7 @@ async def register(body: ProfileIn, response: Response):
 async def login(body: LoginIn, response: Response):
     """Sign an existing user back in by their Discord username (restores the
     session cookie for a returning/new-device/cleared-cookie visitor)."""
-    profile = db.get_profile_by_handle(body.discord_handle)
+    profile = db.get_profile_by_handle(_norm_handle(body.discord_handle))
     if not profile:
         raise HTTPException(
             status_code=404,
