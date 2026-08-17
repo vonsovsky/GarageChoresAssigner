@@ -32,6 +32,14 @@ async def _poll_loop() -> None:
         )
 
 
+async def _heartbeat_loop() -> None:
+    """Ping connected clients so idle WebSockets stay alive and dead ones are
+    pruned — keeps the always-on TV dashboard receiving live updates."""
+    while True:
+        await asyncio.sleep(25)
+        await manager.broadcast({"type": "ping"})
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     db.init_db()
@@ -42,10 +50,12 @@ async def lifespan(app: FastAPI):
     # prime caches immediately (WS also primes on connect)
     await asyncio.gather(upstream.refresh_tasks(), upstream.refresh_users(), upstream.refresh_stats())
     poller = asyncio.create_task(_poll_loop())
+    heartbeat = asyncio.create_task(_heartbeat_loop())
     try:
         yield
     finally:
         poller.cancel()
+        heartbeat.cancel()
         await upstream.close()
 
 

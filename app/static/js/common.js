@@ -37,22 +37,51 @@ function el(tag, attrs = {}, ...children) {
   return e;
 }
 
-// Auto-reconnecting WebSocket. `onMessage(data)` receives parsed JSON.
+// Auto-reconnecting WebSocket with a heartbeat + watchdog so a silently-dropped
+// connection (idle TV, proxy timeout, half-open socket) is detected and
+// reconnected — reconnecting re-fetches a fresh snapshot, so anything missed
+// during the gap shows up. `onMessage(data)` receives parsed JSON.
+const WS_PING_MS = 20000;   // client ping cadence
+const WS_STALE_MS = 45000;  // no traffic for this long => assume dead, reconnect
 function connectWS(onMessage, onStatus) {
-  let ws, closed = false, backoff = 500;
+  let ws, closed = false, backoff = 500, lastRx = Date.now();
+  let pingTimer, watchdog;
   const url = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+
+  function clearTimers() { clearInterval(pingTimer); clearInterval(watchdog); }
+
   function open() {
     ws = new WebSocket(url);
-    ws.onopen = () => { backoff = 500; onStatus && onStatus(true); };
+    ws.onopen = () => {
+      backoff = 500; lastRx = Date.now(); onStatus && onStatus(true);
+      clearTimers();
+      // Send a lightweight ping so proxies see traffic and the server can tell
+      // we're alive; the server also pings us so lastRx stays fresh.
+      pingTimer = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) { try { ws.send("ping"); } catch (e) {} }
+      }, WS_PING_MS);
+      // If nothing has arrived for a while, the socket is probably dead even if
+      // no close event fired — force a reconnect.
+      watchdog = setInterval(() => {
+        if (Date.now() - lastRx > WS_STALE_MS) { try { ws.close(); } catch (e) {} }
+      }, WS_PING_MS / 2);
+    };
     ws.onclose = () => {
+      clearTimers();
       onStatus && onStatus(false);
       if (!closed) setTimeout(open, backoff = Math.min(backoff * 2, 8000));
     };
     ws.onerror = () => ws.close();
-    ws.onmessage = (ev) => { try { onMessage(JSON.parse(ev.data)); } catch (e) { console.error(e); } };
+    ws.onmessage = (ev) => {
+      lastRx = Date.now();
+      let data;
+      try { data = JSON.parse(ev.data); } catch (e) { return; }
+      if (data && data.type === "ping") return;  // heartbeat, not app data
+      try { onMessage(data); } catch (e) { console.error(e); }
+    };
   }
   open();
-  return { close() { closed = true; ws && ws.close(); } };
+  return { close() { closed = true; clearTimers(); ws && ws.close(); } };
 }
 
 function showToast(msg, ms = 3200) {
