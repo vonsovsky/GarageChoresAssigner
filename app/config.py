@@ -24,9 +24,39 @@ class Settings:
     # workload (they eat, they make mess), so they scale head-count chores.
     CHILDREN_COUNT: int = int(os.getenv("CHILDREN_COUNT", "5"))
 
+    # --- Discord OAuth / sessions (Phase 1) ---
+    DISCORD_CLIENT_ID: str = os.getenv("DISCORD_CLIENT_ID", "")
+    DISCORD_CLIENT_SECRET: str = os.getenv("DISCORD_CLIENT_SECRET", "")
+    DISCORD_CALLBACK_URL: str = os.getenv(
+        "DISCORD_CALLBACK_URL", "http://localhost:8000/auth/discord/callback"
+    )
+    # Bot token + guild are used to read a member's roles for gating.
+    DISCORD_BOT_TOKEN: str = os.getenv("DISCORD_BOT_TOKEN", "")
+    DISCORD_GUILD_ID: str = os.getenv("DISCORD_GUILD_ID", "")
+    # Role names (mapped to ids at runtime). Paid gates login; admin unlocks
+    # manage actions; present marks who's still on the trip.
+    DISCORD_PAID_ROLE: str = os.getenv("DISCORD_PAID_ROLE", "")
+    DISCORD_ADMIN_ROLE: str = os.getenv("DISCORD_ADMIN_ROLE", "")
+    DISCORD_PRESENT_ROLE: str = os.getenv("DISCORD_PRESENT_ROLE", "")
+
+    SESSION_SECRET: str = os.getenv("SESSION_SECRET", "dev-insecure-change-me")
+    # Shared password so the TV/tablet can open the dashboard without OAuth.
+    TABLET_PASSWORD: str = os.getenv("TABLET_PASSWORD", "")
+    # When true, pages require a Discord (or tablet) session. Off by default so
+    # the app keeps working while OAuth is being configured (Phase 1).
+    AUTH_REQUIRED: bool = os.getenv("AUTH_REQUIRED", "false").lower() in ("1", "true", "yes")
+
     @property
     def has_upstream_key(self) -> bool:
         return bool(self.CHORES_API_KEY)
+
+    @property
+    def oauth_configured(self) -> bool:
+        return bool(self.DISCORD_CLIENT_ID and self.DISCORD_CLIENT_SECRET)
+
+    @property
+    def role_gating_configured(self) -> bool:
+        return bool(self.DISCORD_BOT_TOKEN and self.DISCORD_GUILD_ID)
 
 
 settings = Settings()

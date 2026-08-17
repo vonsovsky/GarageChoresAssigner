@@ -8,8 +8,10 @@ from pathlib import Path
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from . import db, service
+from .auth import router as auth_router
 from .config import settings
 from .routes import api as api_routes
 from .routes import pages as page_routes
@@ -60,7 +62,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Garage Trip Chores", lifespan=lifespan)
+app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET, same_site="lax")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.include_router(auth_router)
 app.include_router(page_routes.router)
 app.include_router(api_routes.router)
 

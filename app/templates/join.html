@@ -5,6 +5,21 @@
 <div class="card" style="margin-top:40px">
   <h1>⛰️ Welcome to <span class="logo">Garage Trip</span></h1>
 
+  <a href="/auth/discord" class="btn" style="display:block;text-align:center;background:var(--discord);margin:8px 0 6px">
+    Log in with Discord
+  </a>
+  <p class="muted" style="font-size:.82rem;margin:0 0 14px">Uses your Discord account — no password to remember.</p>
+
+  <details style="margin-bottom:14px">
+    <summary class="muted" style="cursor:pointer;font-size:.85rem">On the TV? Tablet login</summary>
+    <form method="post" action="/auth/tablet" style="margin-top:8px">
+      <input type="password" name="password" placeholder="Tablet password" required />
+      <button type="submit" class="secondary" style="margin-top:8px">Open dashboard</button>
+    </form>
+  </details>
+
+  <div class="muted" style="text-align:center;font-size:.8rem;margin-bottom:10px">— or set up manually —</div>
+
   <div class="chiprow" style="margin-bottom:12px">
     <div class="chip on" id="tab-join">I'm new — join</div>
     <div class="chip" id="tab-login">I've been here — sign in</div>
