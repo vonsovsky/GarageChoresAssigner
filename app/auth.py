@@ -103,13 +103,22 @@ async def discord_callback(request: Request):
         resp = await oauth.discord.get("users/@me", token=token)
         profile = resp.json()
     except Exception as exc:  # noqa: BLE001
-        log.warning("discord callback failed: %s", exc)
-        return RedirectResponse("/unauthorized", status_code=302)
+        # A failed token exchange is a *login* error, not a role problem — keep
+        # them distinct so the message reflects the real cause.
+        log.exception("discord OAuth token exchange failed")
+        return HTMLResponse(
+            "<h1>Login failed</h1>"
+            "<p>Couldn't complete Discord login.</p>"
+            f"<p style='color:#888'>Detail: {type(exc).__name__}: {exc}</p>"
+            '<p><a href="/">Try again</a></p>',
+            status_code=400,
+        )
 
     discord_id = str(profile.get("id"))
     roles = await fetch_member_roles(discord_id)
     # Gate on the paid role only when role gating is actually configured.
     if settings.role_gating_configured and settings.DISCORD_PAID_ROLE and not roles.get("has_paid"):
+        log.info("login denied for %s — no paid role (found=%s)", discord_id, roles.get("found"))
         return RedirectResponse("/unauthorized", status_code=302)
 
     redirect = RedirectResponse("/feed", status_code=302)
