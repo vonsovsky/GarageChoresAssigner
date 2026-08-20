@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter()
@@ -12,6 +13,9 @@ templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent
 
 @router.get("/")
 async def join(request: Request):
+    # Already logged in → straight to the chores.
+    if request.session.get("user"):
+        return RedirectResponse("/feed", status_code=302)
     return templates.TemplateResponse(request, "join.html", {"active": "join"})
 
 

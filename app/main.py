@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import db, service
+from . import service, store
 from .auth import router as auth_router
 from .config import settings
 from .routes import api as api_routes
@@ -45,7 +45,7 @@ async def _heartbeat_loop() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    db.init_db()
+    store.init_db()
     upstream.on_event(service.on_upstream_event)
     if not settings.has_upstream_key:
         log.warning("CHORES_API_KEY is empty — set it in .env for live upstream sync.")

@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from . import db
+from . import store
 from .catalog import size_for
 from .suggestions import build_person_pool, suggest
 from .upstream import upstream
@@ -33,7 +33,7 @@ def _is_active(task: dict[str, Any]) -> bool:
 
 def build_chore_view(task: dict[str, Any]) -> dict[str, Any]:
     """Enrich a raw upstream task with local metadata, size, urgency, claims."""
-    meta = db.get_chore_meta(task["id"]) or {}
+    meta = store.get_chore_meta(task["id"]) or {}
     est = task.get("estimated_time_min", 0)
     size = meta.get("size") or size_for(est)
 
@@ -45,7 +45,7 @@ def build_chore_view(task: dict[str, Any]) -> dict[str, Any]:
         if minutes_to_deadline <= URGENT_DEADLINE_MIN:
             urgent = True
 
-    claimers = db.claims_for_task(task["id"])
+    claimers = store.claims_for_task(task["id"])
     directory = _person_directory()  # resolves both local profiles and upstream handles
     claimer_views = [
         {
@@ -97,7 +97,7 @@ def suggestions_for(task_id: int) -> dict[str, Any]:
     if not task:
         return {"top": [], "ranked": []}
     pool = build_person_pool(upstream.users, upstream.stats)
-    claimers = frozenset(db.claims_for_task(task_id))
+    claimers = frozenset(store.claims_for_task(task_id))
     fully_claimed = len(claimers) >= task.get("necessary_workers", 1)
     return suggest(task, pool, claimed_ids=claimers, fully_claimed=fully_claimed)
 
@@ -109,7 +109,7 @@ def _person_directory() -> dict[str, dict[str, str]]:
         did = u.get("discord_id")
         if did:
             directory[did] = {"name": u.get("handle") or did, "handle": u.get("handle") or ""}
-    for p in db.all_profiles():
+    for p in store.all_profiles():
         did = p["discord_id"]
         entry = directory.get(did, {})
         entry["name"] = p["name"]
@@ -131,14 +131,14 @@ def release_active_claims(discord_id: str) -> list[dict[str, Any]]:
     for task_id in _claims_by_user().get(discord_id, []):
         task = upstream.tasks.get(task_id)
         if task and _is_active(task):
-            db.remove_claim(task_id, discord_id)
+            store.remove_claim(task_id, discord_id)
             affected.append(build_chore_view(task))
     return affected
 
 
 def _claims_by_user() -> dict[str, list[int]]:
     per_user: dict[str, list[int]] = {}
-    for task_id, cids in db.all_claims().items():
+    for task_id, cids in store.all_claims().items():
         for cid in cids:
             per_user.setdefault(cid, []).append(task_id)
     return per_user
@@ -149,7 +149,7 @@ def leaderboard() -> list[dict[str, Any]]:
     spent on them, and how many are still in progress."""
     directory = _person_directory()
     per_user = _claims_by_user()
-    departed = db.departed_ids()
+    departed = store.departed_ids()
     # include anyone who has claims even if their profile/user is gone
     for did in per_user:
         directory.setdefault(did, {"name": did, "handle": ""})
@@ -207,7 +207,7 @@ def user_detail(discord_id: str) -> dict[str, Any]:
         "performing": performing,
         "performed": performed,
         "time_spent_min": sum(v["estimated_time_min"] for v in performed),
-        "departed": discord_id in db.departed_ids(),
+        "departed": discord_id in store.departed_ids(),
     }
 
 

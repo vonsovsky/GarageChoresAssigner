@@ -11,10 +11,10 @@ import logging
 from typing import Any, Optional
 
 from authlib.integrations.starlette_client import OAuth
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import db
+from . import store
 from .config import settings
 from .discord import fetch_member_roles
 
@@ -47,6 +47,20 @@ def current_user(request: Request) -> Optional[dict[str, Any]]:
     return request.session.get("user")
 
 
+def current_uid(request: Request) -> Optional[str]:
+    """The logged-in user's discord_id, or None (tablet sessions have none)."""
+    user = request.session.get("user")
+    return user.get("discord_id") if user else None
+
+
+def require_uid(request: Request) -> str:
+    """FastAPI dependency: the current user's discord_id, or 401."""
+    uid = current_uid(request)
+    if not uid:
+        raise HTTPException(status_code=401, detail="Login required")
+    return uid
+
+
 def is_tablet(request: Request) -> bool:
     return bool(request.session.get("tablet"))
 
@@ -71,8 +85,8 @@ def _login_user(request: Request, response, discord_id: str, name: str,
     request.session["discord_id"] = discord_id
     response.set_cookie(COOKIE, discord_id, max_age=60 * 60 * 24 * 14, samesite="lax")
 
-    existing = db.get_profile(discord_id)
-    db.upsert_profile(
+    existing = store.get_profile(discord_id)
+    store.upsert_profile(
         discord_id=discord_id,
         name=name,
         discord_handle=handle,

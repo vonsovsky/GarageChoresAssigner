@@ -32,6 +32,12 @@ class ManualWorkIn(BaseModel):
     minutes: int = Field(ge=1, le=1000)
 
 
+class ProfileSettingsIn(BaseModel):
+    # Name/handle come from Discord; only these are user-editable.
+    skills: list[str] = Field(default_factory=list)
+    max_capacity_min: int = Field(default=240, ge=0, le=10000)
+
+
 class LoginIn(BaseModel):
     discord_handle: str = Field(min_length=1, max_length=80)
 

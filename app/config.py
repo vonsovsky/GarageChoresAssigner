@@ -17,7 +17,9 @@ class Settings:
     CHORES_WS_URL: str = os.getenv("CHORES_WS_URL", "wss://chores.garage-trip.cz/ws")
     CHORES_API_KEY: str = os.getenv("CHORES_API_KEY", "")
 
-    # Local persistence.
+    # Local persistence. STORE_BACKEND selects where app data lives: "sqlite"
+    # (app/db.py) today, "api" once the persistence service exists (Phase 3).
+    STORE_BACKEND: str = os.getenv("STORE_BACKEND", "sqlite").lower()
     DB_PATH: str = os.getenv("DB_PATH", str(PROJECT_ROOT / "chores.db"))
 
     # Retreat parameters. Little children are not assignable but add to the

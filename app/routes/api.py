@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import random
 import re
-from typing import Optional
 
-from fastapi import APIRouter, Cookie, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from .. import db, service
+from .. import service, store
+from ..auth import current_uid, require_uid
 from ..catalog import (
     FUNNY_ACK_MESSAGES,
     SKILLS,
@@ -19,9 +19,8 @@ from ..models import (
     AssignIn,
     ChoreCreateIn,
     DepartureIn,
-    LoginIn,
     ManualWorkIn,
-    ProfileIn,
+    ProfileSettingsIn,
     TemplateIn,
 )
 from ..suggestions import build_person_pool
@@ -29,86 +28,26 @@ from ..upstream import upstream
 
 router = APIRouter(prefix="/api")
 
-COOKIE = "uid"
-
-
-def _norm_handle(handle: str) -> str:
-    """Normalise a typed Discord handle: trim spaces and a leading '@'."""
-    return handle.strip().lstrip("@").strip()
-
-
-def _resolve_discord_id(handle: str) -> str:
-    """Map a Discord handle to its upstream discord_id when the person has
-    already registered through the Discord bot; otherwise use a provisional id
-    that reconciles once they appear upstream."""
-    handle = _norm_handle(handle)
-    for u in upstream.users:
-        if (u.get("handle") or "").lower() == handle.lower():
-            return u["discord_id"]
-    return f"handle:{handle.lower()}"
-
-
-def _current_uid(uid: Optional[str]) -> str:
-    if not uid:
-        raise HTTPException(status_code=401, detail="Not registered - please join first.")
-    return uid
-
 
 # --- identity / profile -----------------------------------------------------
-
-@router.post("/register")
-async def register(body: ProfileIn, response: Response):
-    handle = _norm_handle(body.discord_handle)
-    discord_id = _resolve_discord_id(handle)
-    profile = db.upsert_profile(
-        discord_id=discord_id,
-        name=body.name,
-        discord_handle=handle,
-        skills=body.skills,
-        max_capacity_min=body.max_capacity_min,
-    )
-    response.set_cookie(COOKIE, discord_id, max_age=60 * 60 * 24 * 14, samesite="lax")
-    await service.broadcast_local({"type": "profile_updated", "discord_id": discord_id})
-    return {"profile": profile, "discord_id": discord_id, "matched_upstream": not discord_id.startswith("handle:")}
-
-
-@router.post("/login")
-async def login(body: LoginIn, response: Response):
-    """Sign an existing user back in by their Discord username (restores the
-    session cookie for a returning/new-device/cleared-cookie visitor)."""
-    profile = db.get_profile_by_handle(_norm_handle(body.discord_handle))
-    if not profile:
-        raise HTTPException(
-            status_code=404,
-            detail="No profile for that Discord username yet — please join first.",
-        )
-    discord_id = profile["discord_id"]
-    response.set_cookie(COOKIE, discord_id, max_age=60 * 60 * 24 * 14, samesite="lax")
-    return {"profile": profile, "discord_id": discord_id}
-
-
-@router.post("/logout")
-async def logout(response: Response):
-    response.delete_cookie(COOKIE)
-    return {"ok": True}
-
+# Identity comes from the Discord OAuth session (see app/auth.py). Name/handle
+# are set from Discord at login; only skills + capacity are editable here.
 
 @router.get("/me")
-async def me(uid: Optional[str] = Cookie(default=None)):
+async def me(request: Request):
+    uid = current_uid(request)
     if not uid:
         return {"profile": None}
-    profile = db.get_profile(uid)
-    return {"profile": profile, "discord_id": uid}
+    return {"profile": store.get_profile(uid), "discord_id": uid}
 
 
 @router.put("/me")
-async def update_me(body: ProfileIn, response: Response, uid: Optional[str] = Cookie(default=None)):
-    _current_uid(uid)
-    # allow the handle to be corrected; keep the same identity key
-    profile = db.upsert_profile(
-        discord_id=uid,  # type: ignore[arg-type]
-        name=body.name,
-        discord_handle=body.discord_handle,
+async def update_me(body: ProfileSettingsIn, uid: str = Depends(require_uid)):
+    existing = store.get_profile(uid) or {}
+    profile = store.upsert_profile(
+        discord_id=uid,
+        name=existing.get("name") or uid,
+        discord_handle=existing.get("discord_handle") or "",
         skills=body.skills,
         max_capacity_min=body.max_capacity_min,
     )
@@ -117,15 +56,13 @@ async def update_me(body: ProfileIn, response: Response, uid: Optional[str] = Co
 
 
 @router.get("/me/manual-work")
-async def list_manual(uid: Optional[str] = Cookie(default=None)):
-    uid = _current_uid(uid)
-    return {"entries": db.manual_work_for(uid)}
+async def list_manual(uid: str = Depends(require_uid)):
+    return {"entries": store.manual_work_for(uid)}
 
 
 @router.post("/me/manual-work")
-async def add_manual(body: ManualWorkIn, uid: Optional[str] = Cookie(default=None)):
-    uid = _current_uid(uid)
-    entry = db.add_manual_work(uid, body.description, body.minutes)
+async def add_manual(body: ManualWorkIn, uid: str = Depends(require_uid)):
+    entry = store.add_manual_work(uid, body.description, body.minutes)
     await service.broadcast_local({"type": "workload_updated", "discord_id": uid})
     return {"entry": entry}
 
@@ -136,7 +73,7 @@ def _slugify(name: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "chore"
     key = slug
     n = 2
-    while db.template_key_exists(key):
+    while store.template_key_exists(key):
         key = f"{slug}-{n}"
         n += 1
     return key
@@ -144,29 +81,29 @@ def _slugify(name: str) -> str:
 
 @router.get("/templates")
 async def templates():
-    return {"templates": db.all_templates()}
+    return {"templates": store.all_templates()}
 
 
 @router.post("/templates")
 async def create_template(body: TemplateIn):
     key = _slugify(body.name)
-    tpl = db.upsert_template(key, body.model_dump())
+    tpl = store.upsert_template(key, body.model_dump())
     return {"template": tpl}
 
 
 @router.put("/templates/{key}")
 async def update_template(key: str, body: TemplateIn):
-    if not db.template_key_exists(key):
+    if not store.template_key_exists(key):
         raise HTTPException(status_code=404, detail="Unknown template")
-    tpl = db.upsert_template(key, body.model_dump())
+    tpl = store.upsert_template(key, body.model_dump())
     return {"template": tpl}
 
 
 @router.delete("/templates/{key}")
 async def delete_template(key: str):
-    if not db.template_key_exists(key):
+    if not store.template_key_exists(key):
         raise HTTPException(status_code=404, detail="Unknown template")
-    db.delete_template(key)
+    store.delete_template(key)
     return {"ok": True}
 
 
@@ -197,7 +134,7 @@ async def set_departure(user_id: str, body: DepartureIn):
     """Mark a person as having left the trip early (or back). Departed people
     keep their leaderboard history but are no longer suggested or auto-assigned,
     and their unfinished chores are released so they can be reassigned."""
-    db.set_departed(user_id, body.departed)
+    store.set_departed(user_id, body.departed)
     released = 0
     if body.departed:
         for view in service.release_active_claims(user_id):
@@ -237,7 +174,7 @@ async def chore_suggestions(task_id: int):
 
 @router.post("/chores")
 async def create_chore(body: ChoreCreateIn):
-    template = db.get_template(body.template_key) if body.template_key else None
+    template = store.get_template(body.template_key) if body.template_key else None
 
     # If created from a template, derive time (with head-count scaling) and caps.
     est = body.estimated_time_min
@@ -262,7 +199,7 @@ async def create_chore(body: ChoreCreateIn):
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"Upstream create failed: {exc}")
 
-    db.set_chore_meta(task["id"], urgent=body.urgent, size=size_for(est), template_key=body.template_key)
+    store.set_chore_meta(task["id"], urgent=body.urgent, size=size_for(est), template_key=body.template_key)
     view = service.build_chore_view(task)
     await service.broadcast_local(
         {"type": "task_created", "chore": view, "suggestions": service.suggestions_for(task["id"])["top"]}
@@ -271,13 +208,12 @@ async def create_chore(body: ChoreCreateIn):
 
 
 @router.post("/chores/{task_id}/claim")
-async def claim_chore(task_id: int, uid: Optional[str] = Cookie(default=None)):
-    uid = _current_uid(uid)
+async def claim_chore(task_id: int, uid: str = Depends(require_uid)):
     if task_id not in upstream.tasks:
         raise HTTPException(status_code=404, detail="Unknown chore")
-    db.add_claim(task_id, uid)
+    store.add_claim(task_id, uid)
     view = service.build_chore_view(upstream.tasks[task_id])
-    profile = db.get_profile(uid)
+    profile = store.get_profile(uid)
     name = (profile or {}).get("name", "friend")
     ack = random.choice(FUNNY_ACK_MESSAGES).format(name=name)
     await service.broadcast_local(
@@ -299,7 +235,7 @@ async def assign_chore(task_id: int, body: AssignIn):
         if not top:
             raise HTTPException(status_code=409, detail="No eligible person available to auto-assign.")
         discord_id = top[0]
-    db.add_claim(task_id, discord_id)
+    store.add_claim(task_id, discord_id)
     view = service.build_chore_view(upstream.tasks[task_id])
     name = service.person_name(discord_id)
     await service.broadcast_local(
@@ -310,9 +246,8 @@ async def assign_chore(task_id: int, body: AssignIn):
 
 
 @router.post("/chores/{task_id}/unclaim")
-async def unclaim_chore(task_id: int, uid: Optional[str] = Cookie(default=None)):
-    uid = _current_uid(uid)
-    db.remove_claim(task_id, uid)
+async def unclaim_chore(task_id: int, uid: str = Depends(require_uid)):
+    store.remove_claim(task_id, uid)
     view = service.build_chore_view(upstream.tasks.get(task_id, {"id": task_id, "necessary_workers": 1}))
     await service.broadcast_local(
         {"type": "task_claimed", "chore": view, "by": uid,
@@ -326,7 +261,7 @@ async def unassign_chore(task_id: int, body: AssignIn):
     """Remove a specific person's assignment from a chore (anyone can manage)."""
     if not body.discord_id:
         raise HTTPException(status_code=422, detail="discord_id is required")
-    db.remove_claim(task_id, body.discord_id)
+    store.remove_claim(task_id, body.discord_id)
     view = service.build_chore_view(upstream.tasks.get(task_id, {"id": task_id, "necessary_workers": 1}))
     await service.broadcast_local(
         {"type": "task_claimed", "chore": view, "by": body.discord_id,

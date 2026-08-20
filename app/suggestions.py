@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import db
+from . import store
 from .config import settings
 from .upstream import upstream
 
@@ -22,7 +22,7 @@ def _committed_minutes() -> dict[str, float]:
     claimed in this app (these never reach the upstream stats), so auto-assign
     accounts for work someone is already on the hook for."""
     committed: dict[str, float] = {}
-    for task_id, cids in db.all_claims().items():
+    for task_id, cids in store.all_claims().items():
         task = upstream.tasks.get(task_id)
         if not task or task.get("completed") or task.get("cancelled"):
             continue
@@ -40,9 +40,9 @@ def build_person_pool(
 
     People marked as having left the trip early are excluded so they are never
     suggested or auto-assigned (their leaderboard history is unaffected)."""
-    profiles = {p["discord_id"]: p for p in db.all_profiles()}
-    manual = db.manual_minutes_by_user()
-    departed = db.departed_ids()
+    profiles = {p["discord_id"]: p for p in store.all_profiles()}
+    manual = store.manual_minutes_by_user()
+    departed = store.departed_ids()
     committed = _committed_minutes()
     pool: list[dict[str, Any]] = []
 

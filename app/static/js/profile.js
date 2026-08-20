@@ -7,8 +7,8 @@ async function init() {
   if (!profile) { location.href = "/"; return; }
   myUid = discord_id;
 
-  document.getElementById("name").value = profile.name;
-  document.getElementById("handle").value = profile.discord_handle;
+  document.getElementById("name").textContent = profile.name;
+  document.getElementById("handle").textContent = profile.discord_handle ? "@" + profile.discord_handle : "";
   const cap = document.getElementById("cap");
   cap.value = profile.max_capacity_min;
   const capVal = document.getElementById("cap-val");
@@ -37,18 +37,15 @@ function toggle(chip, skill) {
 async function save(ev) {
   ev.preventDefault();
   const body = {
-    name: document.getElementById("name").value.trim(),
-    discord_handle: document.getElementById("handle").value.trim(),
     skills: [...selectedSkills],
     max_capacity_min: parseInt(document.getElementById("cap").value, 10),
   };
-  try { await API.put("/api/me", body); showToast("Profile saved ✓"); loadWorkload(); }
+  try { await API.put("/api/me", body); showToast("Saved ✓"); loadWorkload(); }
   catch (e) { showToast("Error: " + e.message); }
 }
 
-async function signOut() {
-  try { await API.post("/api/logout"); } catch {}
-  location.href = "/";
+function signOut() {
+  location.href = "/auth/logout";
 }
 
 async function loadWorkload() {
