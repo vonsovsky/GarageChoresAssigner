@@ -6,7 +6,8 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -62,6 +63,32 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Garage Trip Chores", lifespan=lifespan)
+
+# Paths reachable without a session (so people can actually log in).
+_PUBLIC_EXACT = {"/", "/healthz", "/unauthorized", "/favicon.ico"}
+_PUBLIC_PREFIXES = ("/auth/", "/static/")
+
+
+def _is_public(path: str) -> bool:
+    return path in _PUBLIC_EXACT or path.startswith(_PUBLIC_PREFIXES)
+
+
+def _session_authed(session) -> bool:
+    return bool(session.get("user") or session.get("tablet"))
+
+
+# Auth gate. Defined before SessionMiddleware is added so that middleware ends
+# up OUTER (runs first) and `request.session` is populated here.
+@app.middleware("http")
+async def require_auth(request: Request, call_next):
+    if settings.AUTH_REQUIRED and not _is_public(request.url.path):
+        if not _session_authed(request.session):
+            if request.url.path.startswith("/api"):
+                return JSONResponse({"detail": "Login required"}, status_code=401)
+            return RedirectResponse("/", status_code=302)
+    return await call_next(request)
+
+
 app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET, same_site="lax")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.include_router(auth_router)
@@ -71,6 +98,9 @@ app.include_router(api_routes.router)
 
 @app.websocket("/ws")
 async def ws_endpoint(ws: WebSocket):
+    if settings.AUTH_REQUIRED and not _session_authed(ws.session):
+        await ws.close(code=1008)  # policy violation
+        return
     await manager.connect(ws)
     try:
         await ws.send_json(service.snapshot())
