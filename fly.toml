@@ -10,6 +10,7 @@ primary_region = 'fra'
 [env]
   DB_PATH = '/data/chores.db'
   DISCORD_CALLBACK_URL = 'https://garage-trip-chores.fly.dev/auth/discord/callback'
+  AUTH_REQUIRED = 'true'
 
 [[mounts]]
   source = 'chores_data'
