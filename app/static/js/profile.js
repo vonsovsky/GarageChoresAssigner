@@ -12,8 +12,8 @@ async function init() {
   const cap = document.getElementById("cap");
   cap.value = profile.max_capacity_min;
   const capVal = document.getElementById("cap-val");
-  capVal.textContent = profile.max_capacity_min;
-  cap.addEventListener("input", () => (capVal.textContent = cap.value));
+  capVal.textContent = fmtMin(+cap.value);
+  cap.addEventListener("input", () => (capVal.textContent = fmtMin(+cap.value)));
 
   const { skills } = await API.get("/api/skills");
   const box = document.getElementById("skills");
@@ -41,7 +41,7 @@ async function save(ev) {
     max_capacity_min: parseInt(document.getElementById("cap").value, 10),
   };
   try { await API.put("/api/me", body); showToast("Saved ✓"); loadWorkload(); }
-  catch (e) { showToast("Error: " + e.message); }
+  catch (e) { showError(e); }
 }
 
 function signOut() {
@@ -80,7 +80,7 @@ async function addManual(ev) {
     document.getElementById("desc").value = "";
     showToast("Logged ✓");
     await Promise.all([loadManual(), loadWorkload()]);
-  } catch (e) { showToast("Error: " + e.message); }
+  } catch (e) { showError(e); }
 }
 
 init();

@@ -92,13 +92,13 @@ async function save(ev) {
     showToast("Template saved ✓");
     resetForm();
     await load();
-  } catch (e) { showToast("Error: " + e.message); }
+  } catch (e) { showError(e); }
 }
 
 async function del(t) {
   if (!confirm(`Delete template “${t.name}”?`)) return;
   try { await API.del(`/api/templates/${encodeURIComponent(t.key)}`); await load(); }
-  catch (e) { showToast("Error: " + e.message); }
+  catch (e) { showError(e); }
 }
 
 init();

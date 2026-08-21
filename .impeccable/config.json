@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": ".82rem",
+        "createdAt": "2026-08-21T08:16:53.011Z",
+        "reason": "incumbent helper/hint text size used consistently across profile + join hints; documented in DESIGN.md prose, not enumerated in the frontmatter ramp"
+      }
+    ]
+  }
+}

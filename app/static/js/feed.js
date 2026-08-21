@@ -92,14 +92,14 @@ async function claim(id, btn) {
   try {
     const { ack } = await API.post(`/api/chores/${id}/claim`);
     showToast(ack);
-  } catch (e) { showToast("Error: " + e.message); btn.disabled = false; }
+  } catch (e) { showError(e); btn.disabled = false; }
 }
 async function unclaim(id) {
-  try { await API.post(`/api/chores/${id}/unclaim`); } catch (e) { showToast("Error: " + e.message); }
+  try { await API.post(`/api/chores/${id}/unclaim`); } catch (e) { showError(e); }
 }
 async function markDone(id) {
   try { await API.post(`/api/chores/${id}/done`); showToast("Nice — chore done! 🎊"); }
-  catch (e) { showToast("Error: " + e.message); }
+  catch (e) { showError(e); }
 }
 
 init();

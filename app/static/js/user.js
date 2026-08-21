@@ -36,7 +36,7 @@ async function setDeparted(departed) {
       ? `Marked as left early${r.released ? ` — released ${r.released} chore(s)` : ""}`
       : "Welcome back!");
     await load();
-  } catch (e) { showToast("Error: " + e.message); }
+  } catch (e) { showError(e); }
 }
 
 function renderList(id, chores, emptyMsg) {

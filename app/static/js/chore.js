@@ -94,28 +94,28 @@ function renderSuggestions(sug, chore) {
 async function claim(btn) {
   btn.disabled = true;
   try { const { ack } = await API.post(`/api/chores/${id}/claim`); showToast(ack); await load(); }
-  catch (e) { showToast("Error: " + e.message); btn.disabled = false; }
+  catch (e) { showError(e); btn.disabled = false; }
 }
 async function unclaim() {
-  try { await API.post(`/api/chores/${id}/unclaim`); await load(); } catch (e) { showToast("Error: " + e.message); }
+  try { await API.post(`/api/chores/${id}/unclaim`); await load(); } catch (e) { showError(e); }
 }
 async function markDone() {
   try { await API.post(`/api/chores/${id}/done`); showToast("Chore done! 🎊"); setTimeout(() => (location.href = "/feed"), 800); }
-  catch (e) { showToast("Error: " + e.message); }
+  catch (e) { showError(e); }
 }
 async function assignTo(discord_id) {
   try { const r = await API.post(`/api/chores/${id}/assign`, { discord_id }); showToast(r.ack); await load(); }
-  catch (e) { showToast("Error: " + e.message); }
+  catch (e) { showError(e); }
 }
 async function unassign(discord_id, name) {
   if (!confirm(`Remove ${name} from this chore?`)) return;
   try { await API.post(`/api/chores/${id}/unassign`, { discord_id }); showToast(`Removed ${name}`); await load(); }
-  catch (e) { showToast("Error: " + e.message); }
+  catch (e) { showError(e); }
 }
 async function autoAssign(btn) {
   btn.disabled = true;
   try { const r = await API.post(`/api/chores/${id}/assign`, {}); showToast(r.ack); await load(); }
-  catch (e) { showToast("Error: " + e.message); btn.disabled = false; }
+  catch (e) { showError(e); btn.disabled = false; }
 }
 
 init();

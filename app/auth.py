@@ -97,6 +97,26 @@ def _login_user(request: Request, response, discord_id: str, name: str,
 
 # --- routes -----------------------------------------------------------------
 
+def _error_page(title: str, body: str, status: int, debug: str = "") -> HTMLResponse:
+    """A minimal dark-themed page for auth errors, so we never flash a bare
+    white page against the app. Raw technical detail (if any) rides in an HTML
+    comment for debugging, never in front of the user."""
+    comment = f"<!-- {debug} -->" if debug else ""
+    return HTMLResponse(
+        "<!doctype html><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+        f"<title>{title} — Garage Trip Chores</title>"
+        "<div style=\"min-height:100vh;margin:0;display:grid;place-items:center;background:#1b1e22;"
+        "color:#e8edf7;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif\">"
+        "<div style='max-width:30rem;padding:2rem 1.5rem;text-align:center'>"
+        f"<h1 style='margin:.2em 0 .5em'>{title}</h1>"
+        f"<p style='color:#9aa6b5;line-height:1.55'>{body}</p>"
+        "<p style='margin-top:1.5rem'><a href='/' style='color:#8430ce;font-weight:700;text-decoration:none'>&larr; Back to login</a></p>"
+        f"{comment}</div></div>",
+        status_code=status,
+    )
+
+
 @router.get("/auth/discord")
 async def discord_login(request: Request):
     if not settings.oauth_configured:
@@ -120,12 +140,12 @@ async def discord_callback(request: Request):
         # A failed token exchange is a *login* error, not a role problem — keep
         # them distinct so the message reflects the real cause.
         log.exception("discord OAuth token exchange failed")
-        return HTMLResponse(
-            "<h1>Login failed</h1>"
-            "<p>Couldn't complete Discord login.</p>"
-            f"<p style='color:#888'>Detail: {type(exc).__name__}: {exc}</p>"
-            '<p><a href="/">Try again</a></p>',
-            status_code=400,
+        return _error_page(
+            "Login didn't go through",
+            "Discord couldn't finish signing you in. This usually clears up if you try "
+            "again — and if it keeps happening, give an organiser a shout.",
+            status=400,
+            debug=f"{type(exc).__name__}: {exc}",
         )
 
     discord_id = str(profile.get("id"))
@@ -166,10 +186,9 @@ async def tablet_login(request: Request, password: str = Form(...)):
 
 @router.get("/unauthorized")
 async def unauthorized():
-    return HTMLResponse(
-        "<h1>Not on the list</h1>"
-        "<p>Your Discord account isn't a paid attendee of this trip, so you "
-        "can't log in. If that's wrong, ping an organizer.</p>"
-        '<p><a href="/">Back</a></p>',
-        status_code=403,
+    return _error_page(
+        "Not on the list",
+        "This Discord account isn't a paid attendee of the trip, so it can't log in. "
+        "If that's not right, ping an organiser and they'll sort it out.",
+        status=403,
     )

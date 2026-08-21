@@ -127,6 +127,7 @@ input, select, textarea {
   z-index: 50; max-width: 90vw; text-align: center;
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--urgent); color: #fff; }
 
 .conn { font-size: .8rem; padding: 2px 8px; border-radius: 999px; }
 .conn.up { color: var(--ok); }

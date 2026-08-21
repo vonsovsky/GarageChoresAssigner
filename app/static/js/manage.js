@@ -84,7 +84,7 @@ async function submit(ev) {
     showToast("Posted to the board ✓");
     resetForm();
   } catch (e) {
-    showToast("Error: " + e.message);
+    showError(e);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = label; }
   }
@@ -123,7 +123,7 @@ async function loadCurrent() {
 
 async function del(id) {
   if (!confirm("Remove this chore from the board?")) return;
-  try { await API.del(`/api/chores/${id}`); } catch (e) { showToast("Error: " + e.message); }
+  try { await API.del(`/api/chores/${id}`); } catch (e) { showError(e); }
 }
 
 init();
