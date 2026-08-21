@@ -186,3 +186,11 @@ table.lb tbody tr:last-child td { border-bottom: none; }
   margin: 8px 0 0;
 }
 .tv .on-it strong { color: #7dbcff; }
+
+/* Feed card assign row — appears below the claim/done row for unclaimed chores */
+.feed-assign-row {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid #28324c;
+}
+.feed-assign-chip { border-radius: 999px; }
