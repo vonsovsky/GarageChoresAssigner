@@ -114,18 +114,16 @@ async def skills():
 
 @router.get("/stats")
 async def stats():
-    users_by_id = {u["discord_id"]: u for u in upstream.users if u.get("discord_id")}
-    rows = []
-    for discord_id, s in upstream.stats.items():
-        user = users_by_id.get(discord_id, {})
-        rows.append({
-            "discord_id": discord_id,
-            "name": user.get("handle") or discord_id,
-            "workload_min": round(float(s.get("total_min", 0)), 1),
-            "normalized_total": float(s.get("normalized_total", 0)),
-        })
-    rows.sort(key=lambda r: (-r["workload_min"], r["name"].lower()))
-    return {"people": rows, "children_count": settings.CHILDREN_COUNT}
+    """Workload stats straight from upstream /stats (keyed by discord_id). No
+    user/identity data — names are joined client-side against /api/users."""
+    return {"stats": upstream.stats}
+
+
+@router.get("/users")
+async def users():
+    """The trip roster straight from upstream /users, plus the children count so
+    the dashboard can show total head-count context."""
+    return {"users": upstream.users, "children_count": settings.CHILDREN_COUNT}
 
 
 @router.get("/people")

@@ -97,9 +97,18 @@ function card(c) {
 }
 
 async function loadLeader() {
-  const { people, children_count } = await API.get("/api/stats");
+  // Workload comes from /stats, names from /users — each from its own upstream
+  // source, joined here by discord_id.
+  const [{ stats }, { users, children_count }] = await Promise.all([
+    API.get("/api/stats"),
+    API.get("/api/users"),
+  ]);
+  const nameById = new Map(users.map((u) => [u.discord_id, u.handle || u.discord_id]));
+  const people = Object.entries(stats)
+    .map(([id, s]) => ({ name: nameById.get(id) || id, workload_min: Math.round((s.total_min || 0) * 10) / 10 }))
+    .sort((a, b) => b.workload_min - a.workload_min);
   document.getElementById("kids").textContent =
-    `${people.length} adults · ${children_count} little ones (not assignable, but they add to the load 🍽️)`;
+    `${users.length} adults · ${children_count} little ones (not assignable, but they add to the load 🍽️)`;
   const max = Math.max(1, ...people.map((p) => p.workload_min));
   const list = document.getElementById("leader");
   list.innerHTML = "";
