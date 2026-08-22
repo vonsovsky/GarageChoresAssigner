@@ -139,7 +139,7 @@ input, select, textarea {
 
 /* toast / ack */
 .toast {
-  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(120%);
+  position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(120%);
   background: var(--ok); color: #04231a; font-weight: 800; padding: 14px 22px;
   border-radius: 999px; box-shadow: var(--shadow); transition: transform .35s cubic-bezier(.2,1.4,.5,1);
   z-index: 50; max-width: 90vw; text-align: center;
@@ -241,4 +241,23 @@ table.lb tr.podium-1 td:first-child { box-shadow: inset 4px 0 0 var(--accent); }
   table.lb th, table.lb td { padding: 14px 12px; }
   table.lb td { font-size: 1.05rem; }
   .lb-bar { max-width: none; }
+}
+
+/* ---------- touch adaptation ----------
+   Floor interactive targets at ~44px on touch/coarse pointers, while mouse
+   users keep the compact desktop density. */
+@media (pointer: coarse) {
+  button, .btn, .chip {
+    min-height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  button.small, .btn.small { padding: 10px 14px; }
+  .chip { padding: 11px 14px; }
+  .chiprow { gap: 10px; }
+  .navlinks a { display: inline-block; padding: 12px 8px; }
+  .assignee { padding: 8px 8px 8px 14px; }
+  .assignee-x { min-width: 34px; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; }
+  .feed-assign-row { gap: 10px; }
+  /* Give tappable table rows a comfortable height too */
+  table.lb td { padding-top: 18px; padding-bottom: 18px; }
 }
