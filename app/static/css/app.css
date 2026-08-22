@@ -194,3 +194,8 @@ table.lb tbody tr:last-child td { border-bottom: none; }
   border-top: 1px solid #28324c;
 }
 .feed-assign-chip { border-radius: 999px; }
+
+/* Hardening: long chore names / member names wrap instead of clipping */
+.chore h3 { overflow-wrap: anywhere; }
+.card { overflow-wrap: break-word; }
+table.lb td { word-break: break-word; }

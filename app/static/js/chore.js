@@ -97,9 +97,11 @@ async function claim(btn) {
   catch (e) { showError(e); btn.disabled = false; }
 }
 async function unclaim() {
+  if (!confirm("Drop this chore? It'll go back on the board for someone else.")) return;
   try { await API.post(`/api/chores/${id}/unclaim`); await load(); } catch (e) { showError(e); }
 }
 async function markDone() {
+  if (!confirm("Mark this chore done? This can't be undone.")) return;
   try { await API.post(`/api/chores/${id}/done`); showToast("Chore done! 🎊"); setTimeout(() => (location.href = "/feed"), 800); }
   catch (e) { showError(e); }
 }

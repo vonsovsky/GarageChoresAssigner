@@ -4,11 +4,13 @@
 <p style="margin:0 0 6px"><a href="/leaderboard">← Back to leaderboard</a></p>
 <div id="head"><p class="muted">Loading…</p></div>
 
-<h2>In progress</h2>
-<div id="performing"></div>
+<section id="sections" hidden>
+  <h2 id="h-performing">In progress</h2>
+  <div id="performing"></div>
 
-<h2>Completed</h2>
-<div id="performed"></div>
+  <h2 id="h-performed">Completed</h2>
+  <div id="performed"></div>
+</section>
 <script>window.USER_ID = {{ user_id | tojson }};</script>
 {% endblock %}
 {% block scripts %}

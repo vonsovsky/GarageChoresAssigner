@@ -9,7 +9,16 @@ async function init() {
 }
 
 async function load() {
-  const d = await API.get(`/api/users/${encodeURIComponent(uid)}`);
+  let d;
+  try {
+    d = await API.get(`/api/users/${encodeURIComponent(uid)}`);
+  } catch (e) {
+    document.getElementById("sections").hidden = true;
+    document.getElementById("head").innerHTML =
+      '<div class="card"><p class="muted">Couldn\'t load this member right now.</p>' +
+      '<p><a href="/leaderboard">← Back to leaderboard</a></p></div>';
+    return;
+  }
   const head = document.getElementById("head");
   head.innerHTML = "";
   const toggle = el("button", { class: d.departed ? "secondary" : "ghost small", onclick: () => setDeparted(!d.departed) },
@@ -25,6 +34,9 @@ async function load() {
     el("p", { class: "muted", style: "margin:.4em 0 0" },
       `${d.performed.length} done · ${fmtMin(d.time_spent_min) || "0 min"} spent · ${d.performing.length} in progress`)));
 
+  document.getElementById("sections").hidden = false;
+  document.getElementById("h-performing").textContent = `In progress (${d.performing.length})`;
+  document.getElementById("h-performed").textContent = `Completed (${d.performed.length})`;
   renderList("performing", d.performing, "Not working on anything right now.");
   renderList("performed", d.performed, "Nothing completed yet.");
 }

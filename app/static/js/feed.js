@@ -146,7 +146,7 @@ function choreCard(c) {
     ? el("button", { class: "secondary", onclick: () => unclaim(c.id) }, "✓ You're on it — tap to drop")
     : el("button", { onclick: (e) => claim(c.id, e.currentTarget) }, "Claim it");
 
-  const done = el("button", { class: "ghost small", onclick: () => markDone(c.id) }, "Mark done");
+  const done = el("button", { class: "ghost small", onclick: (e) => markDone(c.id, e.currentTarget) }, "Mark done");
 
   const assign = assignRow(c);
 
@@ -168,11 +168,14 @@ async function claim(id, btn) {
   } catch (e) { showError(e); btn.disabled = false; }
 }
 async function unclaim(id) {
+  if (!confirm("Drop this chore? It'll go back on the board for someone else.")) return;
   try { await API.post(`/api/chores/${id}/unclaim`); } catch (e) { showError(e); }
 }
-async function markDone(id) {
+async function markDone(id, btn) {
+  if (!confirm("Mark this chore done? This can't be undone.")) return;
+  if (btn) btn.disabled = true;
   try { await API.post(`/api/chores/${id}/done`); showToast("Nice — chore done! 🎊"); }
-  catch (e) { showError(e); }
+  catch (e) { showError(e); if (btn) btn.disabled = false; }
 }
 async function autoAssignFeed(id, btn) {
   btn.disabled = true;
