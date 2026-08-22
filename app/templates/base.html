@@ -19,7 +19,7 @@
       <a href="/leaderboard" class="{{ 'on' if active=='leaderboard' }}">Leaderboard</a>
       <a href="/manage" class="{{ 'on' if active=='manage' }}">Manage</a>
       <a href="/profile" class="{{ 'on' if active=='profile' }}">Profile</a>
-      <a href="/dashboard" class="{{ 'on' if active=='dashboard' }}">TV</a>
+      <a href="{{ request.url.scheme }}://tv.{{ request.url.netloc }}" class="{{ 'on' if active=='dashboard' }}">TV</a>
     </div>
   </nav>
   {% endblock %}

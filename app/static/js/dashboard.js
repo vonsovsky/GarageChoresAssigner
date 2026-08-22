@@ -97,7 +97,7 @@ function card(c) {
 }
 
 async function loadLeader() {
-  const { people, children_count } = await API.get("/api/people");
+  const { people, children_count } = await API.get("/api/stats");
   document.getElementById("kids").textContent =
     `${people.length} adults · ${children_count} little ones (not assignable, but they add to the load 🍽️)`;
   const max = Math.max(1, ...people.map((p) => p.workload_min));

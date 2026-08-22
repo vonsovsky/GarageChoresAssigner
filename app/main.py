@@ -77,10 +77,19 @@ def _session_authed(session) -> bool:
     return bool(session.get("user") or session.get("tablet"))
 
 
+def _is_tv_host(request: Request) -> bool:
+    return (request.url.hostname or "").startswith("tv.")
+
+
 # Auth gate. Defined before SessionMiddleware is added so that middleware ends
 # up OUTER (runs first) and `request.session` is populated here.
 @app.middleware("http")
 async def require_auth(request: Request, call_next):
+    if _is_tv_host(request):
+        # TV subdomain: read-only dashboard display, no login required.
+        if request.url.path == "/":
+            return RedirectResponse("/dashboard", status_code=302)
+        return await call_next(request)
     if settings.AUTH_REQUIRED and not _is_public(request.url.path):
         if not _session_authed(request.session):
             if request.url.path.startswith("/api"):
