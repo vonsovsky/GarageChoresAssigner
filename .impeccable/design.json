@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-21T00:00:00Z",
+  "title": "Design System: Garage Trip Chores",
+  "extensions": {
+    "colorMeta": {
+      "purple":       { "role": "primary",  "displayName": "Garage Purple",  "canonical": "#8430ce", "tonalRamp": ["#1a0630","#2d0a55","#4a1580","#6620a8","#8430ce","#a452e0","#be7eee","#f0e0ff"] },
+      "purple-hover": { "role": "primary",  "displayName": "Purple Pressed",  "canonical": "#6a26a5", "tonalRamp": ["#160525","#280944","#40126c","#54189a","#6a26a5","#8a48c0","#b07dd8","#e0ccf8"] },
+      "purple-light": { "role": "primary",  "displayName": "Light Purple (text/links/focus)", "canonical": "#b48cff", "tonalRamp": ["#1a0d33","#2e1a5e","#472a8c","#6440bd","#8a5ee6","#b48cff","#cdb0ff","#ece0ff"] },
+      "discord-blue": { "role": "tertiary", "displayName": "Discord Blue",    "canonical": "#5865f2", "tonalRamp": ["#0a0e40","#151e80","#2030c0","#3a4ee0","#5865f2","#7888f8","#a8b4fc","#dde2ff"] },
+      "bg-deep":      { "role": "neutral",  "displayName": "Deepest Surface", "canonical": "#1b1e22", "tonalRamp": ["#0a0c0e","#1b1e22","#252a30","#2f353d","#3a424d","#4f5a68","#7a8898","#bbc5d0"] },
+      "bg":           { "role": "neutral",  "displayName": "Stage",           "canonical": "#22282f", "tonalRamp": ["#0e1014","#1a1e24","#22282f","#2c333c","#374049","#4d5a68","#7a8898","#bbc5d0"] },
+      "panel":        { "role": "neutral",  "displayName": "Panel",           "canonical": "#2a313a", "tonalRamp": ["#10141a","#1c2028","#222830","#2a313a","#343d48","#4a5668","#7288a0","#b8c8d8"] },
+      "panel-raised": { "role": "neutral",  "displayName": "Raised Panel",    "canonical": "#333b45", "tonalRamp": ["#12161c","#1e2330","#282f3a","#333b45","#3e4852","#546070","#7a909c","#b8ccd8"] },
+      "input-well":   { "role": "neutral",  "displayName": "Input Well",      "canonical": "#0e1626", "tonalRamp": ["#060910","#0a1020","#0e1626","#141e30","#1c2840","#283860","#405880","#8090b8"] },
+      "text":         { "role": "neutral",  "displayName": "Primary Text",    "canonical": "#e8edf7", "tonalRamp": ["#585e6a","#7a8090","#9aa6b5","#b8c0cc","#ccd4de","#dde2ec","#e8edf7","#f4f6fa"] },
+      "muted":        { "role": "neutral",  "displayName": "Muted Text",      "canonical": "#9aa6b5", "tonalRamp": ["#3a424e","#4e5868","#606e80","#788492","#9aa6b5","#b4bec8","#ccd4dc","#e8ecf0"] },
+      "white":        { "role": "neutral",  "displayName": "White (on-accent)", "canonical": "#ffffff", "tonalRamp": ["#8a8f96","#a4a9b0","#bcc1c8","#d0d5db","#e2e6ea","#f0f2f5","#f8f9fb","#ffffff"] },
+      "border-card":  { "role": "neutral",  "displayName": "Border · Card",   "canonical": "#28324c", "tonalRamp": ["#0e1220","#161c2e","#1e2740","#28324c","#34405e","#495878","#6f80a0","#aab6cc"] },
+      "border-nav":   { "role": "neutral",  "displayName": "Border · Nav",    "canonical": "#26304a", "tonalRamp": ["#0d111e","#151a2c","#1c2440","#26304a","#333f60","#48587c","#6e80a2","#a9b5cc"] },
+      "border-line":  { "role": "neutral",  "displayName": "Border · Line",   "canonical": "#38425f", "tonalRamp": ["#141824","#1f2638","#2b344c","#38425f","#4a5878","#63749a","#8695b6","#c0cade"] },
+      "border-badge": { "role": "neutral",  "displayName": "Border · Badge",  "canonical": "#333f5c", "tonalRamp": ["#121620","#1d2434","#28324a","#333f5c","#425276","#5a6d98","#8294ba","#bfc9df"] },
+      "bar-track":    { "role": "neutral",  "displayName": "Bar Track",       "canonical": "#1b2436", "tonalRamp": ["#0a0e16","#121826","#1b2436","#243150","#31426e","#4a5f95","#7286b8","#b3c0dd"] },
+      "ok":           { "role": "secondary","displayName": "Task Green",       "canonical": "#35c48a", "tonalRamp": ["#072118","#0e3d2a","#175c3d","#1e7a4f","#35c48a","#5dd1a3","#8ae0c2","#c0f0e0"] },
+      "warn":         { "role": "secondary","displayName": "Warning Amber",    "canonical": "#ffc107", "tonalRamp": ["#332500","#664b00","#997010","#cc9a0a","#ffc107","#ffce50","#ffe08a","#fff3cc"] },
+      "urgent":       { "role": "secondary","displayName": "Urgent Red",       "canonical": "#ff4d5e", "tonalRamp": ["#260510","#4a0a20","#7a1233","#c02040","#ff4d5e","#ff7585","#ffadb6","#ffdde0"] },
+      "size-small":   { "role": "tertiary", "displayName": "Mint (small)",     "canonical": "#9fe6c4", "tonalRamp": ["#0a2a1e","#14503a","#1e7852","#289e6a","#9fe6c4","#b8eed3","#d0f4e4","#eafaf4"] },
+      "size-medium":  { "role": "tertiary", "displayName": "Amber (medium)",   "canonical": "#ffd98a", "tonalRamp": ["#302000","#604400","#906800","#c09000","#ffd98a","#ffe4a8","#ffeec4","#fff7e4"] },
+      "size-large":   { "role": "tertiary", "displayName": "Coral (large)",    "canonical": "#ff9c9c", "tonalRamp": ["#280404","#501010","#7a2020","#b03838","#ff9c9c","#ffb8b8","#ffd4d4","#ffeeee"] },
+      "skill":        { "role": "tertiary", "displayName": "Skill Lavender",   "canonical": "#c9b8ff", "tonalRamp": ["#1a1040","#2e1c78","#4428a8","#6040d0","#c9b8ff","#d8ccff","#e8e4ff","#f4f2ff"] },
+      "tv-on-it":     { "role": "tertiary", "displayName": "TV Assignee Blue", "canonical": "#4ea1ff", "tonalRamp": ["#001840","#002e7a","#0048b8","#1a70e0","#4ea1ff","#80bcff","#b0d8ff","#ddeeff"] }
+    },
+    "typographyMeta": {
+      "display":  { "displayName": "Display / Wordmark", "purpose": "JetBrains Mono 800 — the 'Garage Trip' wordmark and TV dashboard H1 only. Never used for body or label text." },
+      "headline": { "displayName": "Headline",           "purpose": "Large page titles — leaderboard, TV section headers." },
+      "title":    { "displayName": "Title",              "purpose": "Page H1 headings within the 760px content wrap." },
+      "body":     { "displayName": "Body",               "purpose": "All prose, card text, nav links, form labels." },
+      "label":    { "displayName": "Label / Badge",      "purpose": "Badge text, table headers (uppercase + tracking), status pills." }
+    },
+    "shadows": [
+      { "name": "standard-lift",   "value": "0 6px 24px rgba(0,0,0,.45)",                                                                    "purpose": "All .card elements. Lifts content off the very dark background." },
+      { "name": "urgent-inset",    "value": "0 0 0 1px #ff4d5e inset, 0 6px 24px rgba(0,0,0,.45)",                                          "purpose": "Urgent chore card state. Additive inset ring, base shadow preserved." },
+      { "name": "suggest-pulse-a", "value": "0 0 0 1px #8430ce inset, 0 6px 24px rgba(0,0,0,.45)",                                          "purpose": "Suggested-for-you chore card, pulse keyframe start." },
+      { "name": "suggest-pulse-b", "value": "0 0 0 3px #8430ce inset, 0 0 18px rgba(124,92,255,.5)",                                        "purpose": "Suggested-for-you chore card, pulse keyframe peak." }
+    ],
+    "motion": [
+      { "name": "ease-standard",  "value": "0.12s ease",                          "purpose": "Chore card transform and box-shadow transitions at rest." },
+      { "name": "spring-enter",   "value": "0.35s cubic-bezier(.2,1.4,.5,1)",     "purpose": "Toast entry animation — spring overshoot that draws the eye without lingering." },
+      { "name": "pulse-cycle",    "value": "1.6s infinite",                       "purpose": "Suggestion-pulse animation on chore cards marked 'suggested'." }
+    ],
+    "breakpoints": [
+      { "name": "mobile-grid",  "value": "520px",  "purpose": "2-column form grids collapse to 1-column below this width." },
+      { "name": "tv-collapse",  "value": "900px",  "purpose": "TV dashboard 2-col grid (chores + leaderboard) and 2-col chore grid both collapse to single column." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The default action button. Garage Purple fill, bold weight. Used for claim, post chore, save.",
+      "html": "<button class=\"ds-btn-primary\">Claim it</button>",
+      "css": ".ds-btn-primary { display: inline-block; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; border: none; border-radius: 10px; padding: 10px 16px; background: #8430ce; color: #e8edf7; transition: background 0.12s ease; } .ds-btn-primary:hover { background: #6a26a5; } .ds-btn-primary:focus-visible { outline: 2px solid #8430ce; outline-offset: 3px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Supporting/confirmatory action. Raised-panel fill with subtle border.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { display: inline-block; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; border: 1px solid #38425f; border-radius: 10px; padding: 10px 16px; background: #333b45; color: #e8edf7; transition: background 0.12s ease; } .ds-btn-secondary:hover { background: #3e4856; } .ds-btn-secondary:focus-visible { outline: 2px solid #8430ce; outline-offset: 3px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Tertiary action — transparent, muted text, ghost border.",
+      "html": "<button class=\"ds-btn-ghost\">Mark done</button>",
+      "css": ".ds-btn-ghost { display: inline-block; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; border: 1px solid #38425f; border-radius: 10px; padding: 10px 16px; background: transparent; color: #9aa6b5; transition: color 0.12s ease, border-color 0.12s ease; } .ds-btn-ghost:hover { color: #e8edf7; border-color: #9aa6b5; } .ds-btn-ghost:focus-visible { outline: 2px solid #8430ce; outline-offset: 3px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive actions only — delete chore, revoke assignment.",
+      "html": "<button class=\"ds-btn-danger\">Delete</button>",
+      "css": ".ds-btn-danger { display: inline-block; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; border: none; border-radius: 10px; padding: 6px 10px; background: #ff4d5e; color: #ffffff; transition: background 0.12s ease; } .ds-btn-danger:hover { background: #e03040; } .ds-btn-danger:focus-visible { outline: 2px solid #ff4d5e; outline-offset: 3px; }"
+    },
+    {
+      "name": "Skill Chip",
+      "kind": "chip",
+      "refersTo": "chip-unselected",
+      "description": "Toggle chip for skill/expertise selection. Unselected → dark well; selected → Garage Purple.",
+      "html": "<div class=\"ds-chip\">cooking</div><div class=\"ds-chip ds-chip--on\" style=\"margin-left:8px\">grilling</div>",
+      "css": ".ds-chip { display: inline-block; padding: 8px 12px; border-radius: 999px; border: 1px solid #38425f; cursor: pointer; user-select: none; background: #0e1626; color: #9aa6b5; font-weight: 600; font-size: 1rem; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; transition: background 0.1s ease, color 0.1s ease; } .ds-chip:hover { border-color: #8430ce; color: #e8edf7; } .ds-chip--on { background: #8430ce; color: #fff; border-color: transparent; }"
+    },
+    {
+      "name": "Chore Card (default)",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The primary list item on the feed and dashboard. Left accent line encodes state.",
+      "html": "<div class=\"ds-chore-card\"><h3 class=\"ds-chore-title\">Floor sweep (dry)</h3><div class=\"ds-badges\"><span class=\"ds-badge ds-badge--small\">small · 15 min</span><span class=\"ds-badge ds-badge--skill\">needs cleaning</span><span class=\"ds-badge\">0/1 claimed</span></div><p class=\"ds-claimer\">Nobody yet — be the hero.</p></div>",
+      "css": ".ds-chore-card { position: relative; background: #2a313a; border: 1px solid #28324c; border-radius: 14px; border-left: 6px solid #8430ce; padding: 16px; box-shadow: 0 6px 24px rgba(0,0,0,.45); margin-bottom: 14px; overflow: hidden; } .ds-chore-title { margin: 0 0 6px; font-size: 1.15rem; font-weight: 700; color: #e8edf7; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; } .ds-badge { font-size: .74rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: #333b45; color: #9aa6b5; border: 1px solid #333f5c; font-family: system-ui; } .ds-badge--small { color: #9fe6c4; } .ds-badge--medium { color: #ffd98a; } .ds-badge--large { color: #ff9c9c; } .ds-badge--skill { color: #c9b8ff; } .ds-badge--urgent { background: #ff4d5e; color: #fff; border-color: transparent; } .ds-badge--suggest { background: #8430ce; color: #fff; border-color: transparent; } .ds-claimer { margin: .3em 0 0; color: #9aa6b5; font-size: .85rem; font-family: system-ui; }"
+    },
+    {
+      "name": "Chore Card (urgent)",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Urgent variant — red left border and inset glow ring.",
+      "html": "<div class=\"ds-chore-card ds-chore-card--urgent\"><h3 class=\"ds-chore-title\">Take out the bin</h3><div class=\"ds-badges\"><span class=\"ds-badge ds-badge--small\">small · 5 min</span><span class=\"ds-badge ds-badge--urgent\">URGENT</span></div></div>",
+      "css": ".ds-chore-card { position: relative; background: #2a313a; border: 1px solid #28324c; border-radius: 14px; border-left: 6px solid #8430ce; padding: 16px; box-shadow: 0 6px 24px rgba(0,0,0,.45); margin-bottom: 14px; overflow: hidden; } .ds-chore-card--urgent { border-left-color: #ff4d5e; box-shadow: 0 0 0 1px #ff4d5e inset, 0 6px 24px rgba(0,0,0,.45); } .ds-chore-title { margin: 0 0 6px; font-size: 1.15rem; font-weight: 700; color: #e8edf7; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; } .ds-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; } .ds-badge { font-size: .74rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: #333b45; color: #9aa6b5; border: 1px solid #333f5c; font-family: system-ui; } .ds-badge--urgent { background: #ff4d5e; color: #fff; border-color: transparent; } .ds-badge--small { color: #9fe6c4; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "card",
+      "description": "Full-width form field. Recessed input-well background signals editability.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-input\">Your name</label><input class=\"ds-input\" id=\"ds-input\" type=\"text\" placeholder=\"e.g. Jakub\" /></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; } .ds-label { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-weight: 600; font-size: 1rem; color: #e8edf7; margin: 0 0 6px; } .ds-input { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid #38425f; background: #0e1626; color: #e8edf7; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 1rem; transition: border-color 0.12s ease; box-sizing: border-box; } .ds-input:focus { outline: none; border-color: #8430ce; } .ds-input::placeholder { color: #9aa6b5; }"
+    },
+    {
+      "name": "Top Navigation",
+      "kind": "nav",
+      "refersTo": "card",
+      "description": "Sticky frosted-glass nav bar. JetBrains Mono wordmark left; muted links right with purple active underline.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-brand\" href=\"#\"><span class=\"ds-logo\">Garage Trip</span> Chores</a><div class=\"ds-navlinks\"><a href=\"#\" class=\"ds-navlink\">Chores</a><a href=\"#\" class=\"ds-navlink ds-navlink--on\">Leaderboard</a><a href=\"#\" class=\"ds-navlink\">Profile</a></div></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; background: rgba(15,20,32,.8); backdrop-filter: blur(8px); border-bottom: 1px solid #26304a; } .ds-brand { font-weight: 700; font-size: 1.1rem; color: #e8edf7; text-decoration: none; } .ds-logo { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #fff; } .ds-navlinks { display: flex; align-items: center; } .ds-navlink { margin-left: 14px; color: #9aa6b5; font-weight: 600; font-size: 1rem; text-decoration: none; padding: 6px 4px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; transition: color 0.12s ease; } .ds-navlink:hover { color: #e8edf7; } .ds-navlink--on { color: #e8edf7; border-bottom: 2px solid #8430ce; }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Success acknowledgement — appears on chore claim with a funny message. Spring entry from bottom.",
+      "html": "<div class=\"ds-toast\">🎉 Kubík just earned some serious chore cred.</div>",
+      "css": ".ds-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #35c48a; color: #04231a; font-weight: 800; padding: 14px 22px; border-radius: 999px; box-shadow: 0 6px 24px rgba(0,0,0,.45); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 1rem; max-width: 90vw; text-align: center; white-space: nowrap; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Garage Dashboard",
+    "overview": "This is a tool built for a crew that already trusts each other — not a polished consumer product, but a working instrument. The aesthetic is technical and direct: deep near-black surfaces, a single high-saturation purple that cuts through the dark, a monospace wordmark that signals this is something built by hackers for hackers. Density is medium; every screen earns its space but doesn't waste it. The mood is a control room at the start of a day-shift: purposeful, readable from a distance, always-on.\n\nThe visual world is derived directly from garage-trip.cz — the brand's own palette, its SVG pattern overlay, and the JetBrains Mono wordmark are exact lifts, not interpretations. The app is a tool surface within an established event identity, not a standalone brand.\n\nAnimation is used sparingly and always semantically: the pulsing glow on a suggested-for-you chore, the spring toast that pops from the bottom, the subtle inset glow on urgent cards. Everything else is static.",
+    "keyCharacteristics": [
+      "Always dark; no light-mode surfaces anywhere",
+      "Bold, high-contrast typography — system font for body, JetBrains Mono for brand moments only",
+      "Single accent color (brand purple #8430ce) as the primary call to action and selection state",
+      "Status expressed through color, not shape — urgency is red, success is green, suggestion is purple",
+      "Cards with a decisive left-border accent line as the primary structural motif for chore items",
+      "Pills (999px radius) for all tags, badges, chips, and toasts; moderate radius (14px) for structural containers"
+    ],
+    "rules": [
+      { "name": "The One Accent Rule",       "body": "Garage Purple (#8430ce) is the only non-semantic saturated hue in the interface. Every other use of color carries a status meaning. Introducing a second decorative accent is prohibited.", "section": "colors" },
+      { "name": "The Night Rule",             "body": "Every background value must be darker than #22282f. No surface, modal, panel, or card may use a light background value, regardless of context.", "section": "colors" },
+      { "name": "The Mono Gatekeeping Rule",  "body": "JetBrains Mono is the brand's single typographic signal. It appears in the wordmark (.logo) and the TV heading. Adding it to any other context dilutes the signal to zero.", "section": "typography" },
+      { "name": "The Tonal Ladder Rule",      "body": "Surfaces progress from deepest (input-well #0e1626) to bg-deep → panel → panel-raised. Never reverse this order — a container must never be lighter than its parent context.", "section": "elevation" },
+      { "name": "The Three-Radius Rule",      "body": "The system uses exactly three border-radius values: 14px (containers), 10px (controls), 999px (pills). Introducing intermediate values fragments the form language.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do use #8430ce (Garage Purple) as the single action and selection color.",
+      "Do express chore state through the left-border color of .chore cards (purple default, red urgent, purple + glow suggested).",
+      "Do use 999px radius for all badges, tags, chips, and status indicators. Use 14px for cards and 10px for buttons/inputs.",
+      "Do keep the JetBrains Mono wordmark (font-weight: 800) for 'Garage Trip' text only.",
+      "Do let semantic colors carry full meaning: Task Green = done/ok, Urgent Red = danger/alarm, Garage Purple = action/selection.",
+      "Do size TV dashboard text generously — h3 at 1.5rem, on-it label at 1.6rem 700."
+    ],
+    "donts": [
+      "Don't use any background lighter than #22282f. No white cards, no light-mode panels, no high-key surfaces — ever.",
+      "Don't add a second decorative accent color. Discord Blue (#5865f2) is reserved for the login button only.",
+      "Don't use JetBrains Mono outside the .logo class.",
+      "Don't animate anything other than status-driven state changes (urgent glow, suggested pulse, toast spring).",
+      "Don't apply shadows inside inputs or form fields.",
+      "Don't introduce a light-mode toggle or any color-scheme media query."
+    ]
+  }
+}

@@ -14,6 +14,60 @@
         "value": "#b48cff",
         "createdAt": "2026-08-22T07:12:37.213Z",
         "reason": "intentional new token --accent-light: contrast-safe purple for links/focus text on dark (audit P1/P3 fix)"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "1.15rem",
+        "createdAt": "2026-08-22T15:37:55.963Z",
+        "reason": "documented type-scale step in DESIGN.md typography (document refresh); degraded detector can't read nested YAML fontSize"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": ".85rem",
+        "createdAt": "2026-08-22T15:37:55.997Z",
+        "reason": "documented type-scale step in DESIGN.md typography (document refresh); degraded detector can't read nested YAML fontSize"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": ".8rem",
+        "createdAt": "2026-08-22T15:37:56.029Z",
+        "reason": "documented type-scale step in DESIGN.md typography (document refresh); degraded detector can't read nested YAML fontSize"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "1.6rem",
+        "createdAt": "2026-08-22T15:37:56.062Z",
+        "reason": "documented type-scale step in DESIGN.md typography (document refresh); degraded detector can't read nested YAML fontSize"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "1.2rem",
+        "createdAt": "2026-08-22T15:37:56.093Z",
+        "reason": "documented type-scale step in DESIGN.md typography (document refresh); degraded detector can't read nested YAML fontSize"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "1.25rem",
+        "createdAt": "2026-08-22T15:37:56.124Z",
+        "reason": "documented type-scale step in DESIGN.md typography (document refresh); degraded detector can't read nested YAML fontSize"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": ".9rem",
+        "createdAt": "2026-08-22T15:37:56.153Z",
+        "reason": "documented type-scale step in DESIGN.md typography (document refresh); degraded detector can't read nested YAML fontSize"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "1.05rem",
+        "createdAt": "2026-08-22T15:37:56.183Z",
+        "reason": "documented type-scale step in DESIGN.md typography (document refresh); degraded detector can't read nested YAML fontSize"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "1.1rem",
+        "createdAt": "2026-08-22T15:38:35.015Z",
+        "reason": "documented 'brand' type step (nav wordmark) in DESIGN.md typography; degraded detector can't read nested YAML"
       }
     ]
   }
