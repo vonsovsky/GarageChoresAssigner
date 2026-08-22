@@ -19,7 +19,7 @@ async function init() {
   const box = document.getElementById("skills");
   selectedSkills = new Set(profile.skills || []);
   skills.forEach((s) => {
-    const chip = el("div", { class: "chip" + (selectedSkills.has(s) ? " on" : ""), onclick: () => toggle(chip, s) }, s);
+    const chip = el("button", { type: "button", class: "chip" + (selectedSkills.has(s) ? " on" : ""), "aria-pressed": selectedSkills.has(s) ? "true" : "false", onclick: () => toggle(chip, s) }, s);
     box.appendChild(chip);
   });
 
@@ -32,6 +32,7 @@ async function init() {
 function toggle(chip, skill) {
   if (selectedSkills.has(skill)) { selectedSkills.delete(skill); chip.classList.remove("on"); }
   else { selectedSkills.add(skill); chip.classList.add("on"); }
+  chip.setAttribute("aria-pressed", selectedSkills.has(skill) ? "true" : "false");
 }
 
 async function save(ev) {

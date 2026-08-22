@@ -44,8 +44,9 @@ function onMessage(msg) {
         if (msg.chore.active === false) state.chores.delete(msg.chore.id);
         else state.chores.set(msg.chore.id, msg.chore);
         if (msg.suggestions != null) _storeSuggestions(msg.chore.id, msg.suggestions);
-        // Ping me if a fresh chore wants me.
+        // Announce new chores (screen readers) and ping me if one wants me.
         if (msg.type === "task_created") {
+          announce(`New chore: ${msg.chore.name}`);
           const sug = state.suggestions.get(msg.chore.id);
           const top = Array.isArray(sug) ? sug : (sug?.top || []);
           if (top.includes(state.myUid)) showToast("🔔 A new chore suggests YOU!");

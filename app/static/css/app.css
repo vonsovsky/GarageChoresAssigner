@@ -6,8 +6,9 @@
   --panel-2: #333b45;
   --text: #e8edf7;
   --muted: #9aa6b5;
-  --accent: #8430ce;     /* --purple (brand) */
+  --accent: #8430ce;     /* --purple (brand) — for fills */
   --accent-hover: #6a26a5;
+  --accent-light: #b48cff; /* purple for text/links/focus on dark (contrast-safe) */
   --discord: #5865f2;    /* --blue-discord */
   --ok: #35c48a;
   --warn: #ffc107;
@@ -40,7 +41,24 @@ body {
   color: #fff;
 }
 
-a { color: var(--accent); text-decoration: none; }
+a { color: var(--accent-light); text-decoration: none; }
+a:hover, a:focus-visible { text-decoration: underline; }
+
+/* Visible keyboard focus everywhere (browser default is invisible on dark) */
+:focus-visible { outline: 2px solid var(--accent-light); outline-offset: 2px; }
+
+/* Screen-reader-only live region utility */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Respect reduced-motion: keep the "suggested" signal, drop the pulse */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
+  .chore.suggested { animation: none; box-shadow: 0 0 0 2px var(--suggest) inset, var(--shadow); }
+  .toast { transition: opacity .2s ease; }
+}
 
 /* nav */
 .topnav {

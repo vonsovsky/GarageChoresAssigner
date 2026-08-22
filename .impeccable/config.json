@@ -8,6 +8,12 @@
         "value": ".82rem",
         "createdAt": "2026-08-21T08:16:53.011Z",
         "reason": "incumbent helper/hint text size used consistently across profile + join hints; documented in DESIGN.md prose, not enumerated in the frontmatter ramp"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#b48cff",
+        "createdAt": "2026-08-22T07:12:37.213Z",
+        "reason": "intentional new token --accent-light: contrast-safe purple for links/focus text on dark (audit P1/P3 fix)"
       }
     ]
   }

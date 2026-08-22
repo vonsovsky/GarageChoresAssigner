@@ -127,4 +127,16 @@ function showToast(msg, opts) {
 // Show a caught error as a friendly, red toast.
 function showError(err) { console.error(err); showToast(humanError(err), { error: true }); }
 
+// Announce a message to screen readers without any visible UI (e.g. a new chore
+// arriving over the WebSocket). Uses a single shared visually-hidden live region.
+function announce(msg) {
+  let live = document.getElementById("a11y-live");
+  if (!live) {
+    live = el("div", { id: "a11y-live", class: "sr-only", "aria-live": "polite", "aria-atomic": "true" });
+    document.body.appendChild(live);
+  }
+  live.textContent = "";                 // reset so identical consecutive messages re-announce
+  requestAnimationFrame(() => (live.textContent = msg));
+}
+
 const fmtMin = (m) => (m == null ? "" : m >= 60 ? `${Math.round(m / 6) / 10} h` : `${m} min`);

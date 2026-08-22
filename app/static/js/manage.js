@@ -10,16 +10,18 @@ async function init() {
   templates = tpls;
 
   const tbox = document.getElementById("templates");
-  templates.forEach((t) => tbox.appendChild(el("div", { class: "chip", onclick: () => loadTemplate(t) }, t.name)));
+  templates.forEach((t) => tbox.appendChild(el("button", { type: "button", class: "chip", onclick: () => loadTemplate(t) }, t.name)));
 
   const sbox = document.getElementById("skills");
   skills.forEach((s) => {
-    const chip = el("div", { class: "chip", onclick: () => toggleSkill(chip, s) }, s);
+    const chip = el("button", { type: "button", class: "chip", "aria-pressed": "false", onclick: () => toggleSkill(chip, s) }, s);
     sbox.appendChild(chip);
   });
 
   document.getElementById("urgent").addEventListener("click", (e) => {
-    urgent = !urgent; e.target.classList.toggle("on", urgent);
+    urgent = !urgent;
+    e.currentTarget.classList.toggle("on", urgent);
+    e.currentTarget.setAttribute("aria-pressed", urgent ? "true" : "false");
   });
   document.getElementById("chore-form").addEventListener("submit", submit);
   document.getElementById("headcount").addEventListener("input", recalcFromTemplate);
@@ -31,6 +33,7 @@ async function init() {
 function toggleSkill(chip, s) {
   if (selectedSkills.has(s)) { selectedSkills.delete(s); chip.classList.remove("on"); }
   else { selectedSkills.add(s); chip.classList.add("on"); }
+  chip.setAttribute("aria-pressed", selectedSkills.has(s) ? "true" : "false");
 }
 
 function loadTemplate(t) {
@@ -42,8 +45,11 @@ function loadTemplate(t) {
   document.getElementById("timeout").value = t.assignment_timeout_min;
 
   selectedSkills = new Set(t.necessary_capabilities || []);
-  document.querySelectorAll("#skills .chip").forEach((c) =>
-    c.classList.toggle("on", selectedSkills.has(c.textContent)));
+  document.querySelectorAll("#skills .chip").forEach((c) => {
+    const on = selectedSkills.has(c.textContent);
+    c.classList.toggle("on", on);
+    c.setAttribute("aria-pressed", on ? "true" : "false");
+  });
 
   document.getElementById("headcount-wrap").hidden = !t.scales_with_headcount;
   recalcFromTemplate();
@@ -96,7 +102,10 @@ function resetForm() {
   document.getElementById("form-title").textContent = "Create a chore";
   document.getElementById("headcount-wrap").hidden = true;
   selectedSkills.clear(); urgent = false;
-  document.querySelectorAll("#skills .chip, #urgent").forEach((c) => c.classList.remove("on"));
+  document.querySelectorAll("#skills .chip, #urgent").forEach((c) => {
+    c.classList.remove("on");
+    c.setAttribute("aria-pressed", "false");
+  });
 }
 
 function onMessage(msg) {

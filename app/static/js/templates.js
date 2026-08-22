@@ -6,13 +6,14 @@ async function init() {
   const { skills } = await API.get("/api/skills");
   const sbox = document.getElementById("skills");
   skills.forEach((s) => {
-    const chip = el("div", { class: "chip", onclick: () => toggleSkill(chip, s) }, s);
+    const chip = el("button", { type: "button", class: "chip", "aria-pressed": "false", onclick: () => toggleSkill(chip, s) }, s);
     sbox.appendChild(chip);
   });
 
   document.getElementById("scales").addEventListener("click", (e) => {
     scales = !scales;
-    e.target.classList.toggle("on", scales);
+    e.currentTarget.classList.toggle("on", scales);
+    e.currentTarget.setAttribute("aria-pressed", scales ? "true" : "false");
     document.getElementById("perperson-wrap").hidden = !scales;
   });
   document.getElementById("tpl-form").addEventListener("submit", save);
@@ -54,10 +55,15 @@ function edit(t) {
   document.getElementById("time").value = t.estimated_time_min;
   document.getElementById("timeout").value = t.assignment_timeout_min;
   selectedSkills = new Set(t.necessary_capabilities || []);
-  document.querySelectorAll("#skills .chip").forEach((c) =>
-    c.classList.toggle("on", selectedSkills.has(c.textContent)));
+  document.querySelectorAll("#skills .chip").forEach((c) => {
+    const on = selectedSkills.has(c.textContent);
+    c.classList.toggle("on", on);
+    c.setAttribute("aria-pressed", on ? "true" : "false");
+  });
   scales = t.scales_with_headcount;
-  document.getElementById("scales").classList.toggle("on", scales);
+  const scalesBtn = document.getElementById("scales");
+  scalesBtn.classList.toggle("on", scales);
+  scalesBtn.setAttribute("aria-pressed", scales ? "true" : "false");
   document.getElementById("perperson-wrap").hidden = !scales;
   document.getElementById("perperson").value = t.per_person_min;
   document.getElementById("cancel-edit").hidden = false;
@@ -69,7 +75,10 @@ function resetForm() {
   document.getElementById("edit-key").value = "";
   document.getElementById("form-title").textContent = "Add a template";
   selectedSkills.clear(); scales = false;
-  document.querySelectorAll("#skills .chip, #scales").forEach((c) => c.classList.remove("on"));
+  document.querySelectorAll("#skills .chip, #scales").forEach((c) => {
+    c.classList.remove("on");
+    c.setAttribute("aria-pressed", "false");
+  });
   document.getElementById("perperson-wrap").hidden = true;
   document.getElementById("cancel-edit").hidden = true;
 }
