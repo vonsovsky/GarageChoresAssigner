@@ -199,3 +199,28 @@ table.lb tbody tr:last-child td { border-bottom: none; }
 .chore h3 { overflow-wrap: anywhere; }
 .card { overflow-wrap: break-word; }
 table.lb td { word-break: break-word; }
+
+/* ---------- leaderboard scoreboard ---------- */
+table.lb th.rank-col { width: 3.4rem; text-align: center; }
+table.lb td.rank {
+  width: 3.4rem; text-align: center; font-weight: 700;
+  color: var(--muted); font-variant-numeric: tabular-nums;
+}
+table.lb td.rank .medal { font-size: 1.5rem; }
+/* The champion: signature left-accent spine + a lifted panel, so #1 reads as the peak */
+table.lb tr.podium-1 td { background: var(--panel-2); }
+table.lb tr.podium-1 td:first-child { box-shadow: inset 4px 0 0 var(--accent); }
+/* Effort bar — the purple gradient motif; empty track = did nothing yet */
+.lb-bar {
+  height: 12px; max-width: 320px; margin-top: 8px;
+  border-radius: 999px; background: #1b2436; overflow: hidden;
+}
+.lb-bar > span {
+  display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--suggest));
+}
+@media (max-width: 560px) {
+  table.lb th, table.lb td { padding: 14px 12px; }
+  table.lb td { font-size: 1.05rem; }
+  .lb-bar { max-width: none; }
+}
