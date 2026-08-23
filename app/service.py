@@ -136,38 +136,23 @@ def _claims_by_user() -> dict[str, list[int]]:
 
 
 def leaderboard() -> list[dict[str, Any]]:
-    """One row per known person: chores performed (completed & claimed), time
-    spent on them, and how many are still in progress."""
-    directory = _person_directory()
-    per_user = _claims_by_user()
-    # include anyone who has claims even if their profile/user is gone
-    for did in per_user:
-        directory.setdefault(did, {"name": did, "handle": ""})
-
+    """One row per user from upstream /stats: chores done (worked_count) and time
+    spent on them (worked_min), plus outstanding assignments. Names from /users;
+    no local data."""
+    names = {u["discord_id"]: u.get("handle") for u in upstream.users if u.get("discord_id")}
     rows: list[dict[str, Any]] = []
-    for did, info in directory.items():
-        performing = performed = time_spent = 0
-        for task_id in per_user.get(did, []):
-            task = upstream.tasks.get(task_id)
-            if not task or task.get("cancelled"):
-                continue
-            if task.get("completed"):
-                performed += 1
-                time_spent += task.get("estimated_time_min", 0)
-            else:
-                performing += 1
+    for did, s in upstream.stats.items():
         rows.append(
             {
                 "discord_id": did,
-                "name": info.get("name") or did,
-                "handle": info.get("handle") or "",
-                "performed_count": performed,
-                "performing_count": performing,
-                "time_spent_min": time_spent,
+                "name": names.get(did) or did,
+                "worked_count": int(s.get("worked_count", 0)),
+                "worked_min": round(float(s.get("worked_min", 0)), 1),
+                "assigned_count": int(s.get("assigned_count", 0)),
             }
         )
-    # default order: most time spent first
-    rows.sort(key=lambda r: (-r["time_spent_min"], -r["performed_count"], r["name"].lower()))
+    # default order: most time worked first
+    rows.sort(key=lambda r: (-r["worked_min"], -r["worked_count"], r["name"].lower()))
     return rows
 
 

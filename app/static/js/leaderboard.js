@@ -1,6 +1,7 @@
 // Leaderboard: sortable table (default: time spent, descending). Live updates.
+// Values come from the upstream /stats endpoint (worked_count / worked_min).
 let rows = [];
-let sortKey = "time_spent_min";
+let sortKey = "worked_min";
 let sortDir = -1; // -1 desc, 1 asc
 
 async function init() {
@@ -38,8 +39,8 @@ function sorted() {
 // *place*, so it travels with them no matter how the table is re-sorted.
 function computeRanks() {
   const byEffort = [...rows].sort((a, b) =>
-    (b.time_spent_min - a.time_spent_min) ||
-    (b.performed_count - a.performed_count) ||
+    (b.worked_min - a.worked_min) ||
+    (b.worked_count - a.worked_count) ||
     a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
   const m = new Map();
   byEffort.forEach((r, i) => m.set(r.discord_id, i + 1));
@@ -62,12 +63,12 @@ function render() {
   document.getElementById("empty").hidden = list.length > 0;
 
   const rankOf = computeRanks();
-  const maxTime = Math.max(1, ...rows.map((r) => r.time_spent_min));
+  const maxTime = Math.max(1, ...rows.map((r) => r.worked_min));
 
   list.forEach((r) => {
     const rank = rankOf.get(r.discord_id);
     // Only crown people who've actually done something — no medal for 0 effort.
-    const hasEffort = r.time_spent_min > 0 || r.performed_count > 0;
+    const hasEffort = r.worked_min > 0 || r.worked_count > 0;
     const medal = hasEffort && rank <= 3 ? MEDALS[rank - 1] : null;
 
     const rankCell = el("td", { class: "rank" },
@@ -75,13 +76,13 @@ function render() {
         ? el("span", { class: "medal" }, medal)
         : el("span", { class: hasEffort ? "" : "muted" }, "#" + rank));
 
-    const active = r.performing_count
-      ? el("span", { class: "badge suggest", style: "margin-left:8px" }, `${r.performing_count} in progress`)
+    const active = r.assigned_count
+      ? el("span", { class: "badge suggest", style: "margin-left:8px" }, `${r.assigned_count} in progress`)
       : null;
 
     // Effort bar — the purple gradient motif, scaled to the leader. An empty
     // track is an honest "hasn't done anything yet".
-    const pct = Math.round((r.time_spent_min / maxTime) * 100);
+    const pct = Math.round((r.worked_min / maxTime) * 100);
     const bar = el("div", { class: "lb-bar" }, el("span", { style: `width:${pct}%` }));
 
     const nameCell = el("td", {},
@@ -91,8 +92,8 @@ function render() {
     const cls = "clickable" + (hasEffort && rank === 1 ? " podium-1" : "");
     const tr = el("tr", { class: cls, onclick: () => (location.href = `/users/${encodeURIComponent(r.discord_id)}`) },
       rankCell, nameCell,
-      el("td", { class: "num" }, String(r.performed_count)),
-      el("td", { class: "num" }, fmtMin(r.time_spent_min) || "0 min"));
+      el("td", { class: "num" }, String(r.worked_count)),
+      el("td", { class: "num" }, fmtMin(r.worked_min) || "0 min"));
     tbody.appendChild(tr);
   });
 }
