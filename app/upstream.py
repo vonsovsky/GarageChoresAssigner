@@ -36,6 +36,22 @@ TASK_EVENTS = {
     "task_timeout",
 }
 
+# Events that change a task's assignment arrays (assigned/acked/declined/
+# timeouted). The event's chore payload may not carry those arrays, so we
+# re-fetch the task from REST to keep the cache (and thus "who's on it") correct.
+ASSIGNMENT_EVENTS = {"task_assigned", "task_acked", "task_refused", "task_timeout"}
+
+
+def _chore_id(obj: Optional[dict[str, Any]], id_key: str = "id") -> Optional[int]:
+    """Pull a chore id out of a WS payload object, tolerating key casing
+    differences (the AsyncAPI schema uses PascalCase; REST uses snake_case)."""
+    if not isinstance(obj, dict):
+        return None
+    for key in (id_key, id_key.upper(), "ID", "ChoreId", "choreId"):
+        if obj.get(key) is not None:
+            return obj[key]
+    return None
+
 
 class UpstreamClient:
     def __init__(self) -> None:
@@ -104,6 +120,30 @@ class UpstreamClient:
         task = resp.json()
         self.tasks[task["id"]] = task
         return task
+
+    async def refresh_task(self, task_id: int) -> Optional[dict[str, Any]]:
+        """Re-fetch a single task (incl. its assignment arrays) into the cache."""
+        try:
+            resp = await self._http.get(f"/tasks/{task_id}")
+            resp.raise_for_status()
+            task = resp.json()
+            self.tasks[task_id] = task
+            return task
+        except Exception as exc:  # noqa: BLE001
+            log.warning("refresh_task(%s) failed: %s", task_id, exc)
+            return self.tasks.get(task_id)
+
+    async def ack(self, task_id: int, user_id: str) -> Optional[dict[str, Any]]:
+        """Claim a task for a user (upstream ack), then refresh the cached task."""
+        resp = await self._http.post(f"/tasks/{task_id}/ack", json={"user_id": user_id})
+        resp.raise_for_status()
+        return await self.refresh_task(task_id)
+
+    async def reject(self, task_id: int, user_id: str) -> Optional[dict[str, Any]]:
+        """Drop a user's claim on a task (upstream reject), then refresh cache."""
+        resp = await self._http.post(f"/tasks/{task_id}/reject", json={"user_id": user_id})
+        resp.raise_for_status()
+        return await self.refresh_task(task_id)
 
     async def delete_task(self, task_id: int) -> None:
         resp = await self._http.delete(f"/tasks/{task_id}")
@@ -193,6 +233,14 @@ class UpstreamClient:
                 self.tasks.pop(chore["id"], None)
             else:
                 self.tasks[chore["id"]] = chore
+
+        # Assignment arrays (acked/…) aren't guaranteed in the event payload, so
+        # re-fetch the task to keep "who's on it" correct — including claims made
+        # out-of-band via the Discord bot.
+        if event_type in ASSIGNMENT_EVENTS:
+            tid = _chore_id(chore) or _chore_id(assignment, id_key="chore_id")
+            if tid is not None:
+                await self.refresh_task(tid)
 
         # Stats shift on most transitions; refresh lazily on terminal events.
         if event_type in {"task_done", "task_assigned", "task_timeout"}:

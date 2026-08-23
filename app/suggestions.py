@@ -18,16 +18,15 @@ from .upstream import upstream
 
 
 def _committed_minutes() -> dict[str, float]:
-    """Minutes each person has already committed to in-progress chores they've
-    claimed in this app (these never reach the upstream stats), so auto-assign
-    accounts for work someone is already on the hook for."""
+    """Minutes each person has already committed to via in-progress chores they've
+    claimed (acked) upstream but not yet completed (so not in the upstream stats
+    yet), so auto-assign accounts for work someone is already on the hook for."""
     committed: dict[str, float] = {}
-    for task_id, cids in store.all_claims().items():
-        task = upstream.tasks.get(task_id)
+    for task in upstream.tasks.values():
         if not task or task.get("completed") or task.get("cancelled"):
             continue
         est = task.get("estimated_time_min", 0)
-        for cid in cids:
+        for cid in (task.get("acked") or []):
             committed[cid] = committed.get(cid, 0) + est
     return committed
 

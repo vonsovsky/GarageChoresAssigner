@@ -1,10 +1,10 @@
 """SQLite persistence for the data the upstream chores API does not hold:
-local profiles, per-chore metadata (urgent flag, size), manual out-of-scope
-work, and local claim tracking.
+local profiles, per-chore metadata (urgent flag, size), and manual out-of-scope
+work.
 
-The upstream API is the source of truth for tasks/assignments/stats; this
-layer only augments it. Scale is tiny (~15 users), so a single shared
-connection guarded by a lock is plenty.
+The upstream API is the source of truth for tasks/assignments/stats (claims are
+its `acked` arrays); this layer only augments it. Scale is tiny (~15 users), so
+a single shared connection guarded by a lock is plenty.
 """
 from __future__ import annotations
 
@@ -57,13 +57,6 @@ CREATE TABLE IF NOT EXISTS manual_work (
     description TEXT NOT NULL,
     minutes     INTEGER NOT NULL,
     created     TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS claims (
-    task_id     INTEGER NOT NULL,
-    discord_id  TEXT NOT NULL,
-    created     TEXT NOT NULL,
-    PRIMARY KEY (task_id, discord_id)
 );
 
 CREATE TABLE IF NOT EXISTS departures (
@@ -245,63 +238,17 @@ def manual_minutes_by_user() -> dict[str, int]:
     return {r["discord_id"]: r["m"] for r in rows}
 
 
-# --- claims (local) ---------------------------------------------------------
-
-def add_claim(task_id: int, discord_id: str) -> None:
-    with _lock:
-        conn = get_conn()
-        conn.execute(
-            "INSERT OR IGNORE INTO claims (task_id, discord_id, created) VALUES (?, ?, ?)",
-            (task_id, discord_id, _now()),
-        )
-        conn.commit()
-
-
-def remove_claim(task_id: int, discord_id: str) -> None:
-    with _lock:
-        conn = get_conn()
-        conn.execute(
-            "DELETE FROM claims WHERE task_id = ? AND discord_id = ?", (task_id, discord_id)
-        )
-        conn.commit()
-
-
-def claims_for_task(task_id: int) -> list[str]:
-    with _lock:
-        rows = get_conn().execute(
-            "SELECT discord_id FROM claims WHERE task_id = ?", (task_id,)
-        ).fetchall()
-    return [r["discord_id"] for r in rows]
-
-
-def all_claims() -> dict[int, list[str]]:
-    with _lock:
-        rows = get_conn().execute("SELECT task_id, discord_id FROM claims").fetchall()
-    out: dict[int, list[str]] = {}
-    for r in rows:
-        out.setdefault(r["task_id"], []).append(r["discord_id"])
-    return out
-
-
 # --- merge two identities ----------------------------------------------------
 
 def merge_user(from_id: str, to_id: str) -> dict[str, int]:
-    """Fold `from_id` into `to_id`: move claims, manual work and departure onto
-    the canonical id and delete the duplicate profile. Returns counts moved."""
+    """Fold `from_id` into `to_id`: move manual work and departure onto the
+    canonical id and delete the duplicate profile. Returns counts moved.
+    (Claims live upstream now, keyed by discord_id, so they aren't touched here.)"""
     with _lock:
         conn = get_conn()
-        claims = conn.execute(
-            "SELECT COUNT(*) FROM claims WHERE discord_id = ?", (from_id,)
-        ).fetchone()[0]
         manual = conn.execute(
             "SELECT COUNT(*) FROM manual_work WHERE discord_id = ?", (from_id,)
         ).fetchone()[0]
-        # Move claims; skip any the target already holds (PK conflict), then
-        # drop whatever remains under the old id.
-        conn.execute(
-            "UPDATE OR IGNORE claims SET discord_id = ? WHERE discord_id = ?", (to_id, from_id)
-        )
-        conn.execute("DELETE FROM claims WHERE discord_id = ?", (from_id,))
         conn.execute(
             "UPDATE manual_work SET discord_id = ? WHERE discord_id = ?", (to_id, from_id)
         )
@@ -316,7 +263,7 @@ def merge_user(from_id: str, to_id: str) -> dict[str, int]:
             conn.execute("DELETE FROM departures WHERE discord_id = ?", (from_id,))
         conn.execute("DELETE FROM profiles WHERE discord_id = ?", (from_id,))
         conn.commit()
-    return {"claims": claims, "manual_work": manual}
+    return {"manual_work": manual}
 
 
 # --- departures (people who left the trip early) -----------------------------

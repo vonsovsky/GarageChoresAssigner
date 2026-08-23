@@ -35,12 +35,6 @@ add_manual_work = _backend.add_manual_work
 manual_work_for = _backend.manual_work_for
 manual_minutes_by_user = _backend.manual_minutes_by_user
 
-# --- claims ---
-add_claim = _backend.add_claim
-remove_claim = _backend.remove_claim
-claims_for_task = _backend.claims_for_task
-all_claims = _backend.all_claims
-
 # --- templates ---
 all_templates = _backend.all_templates
 get_template = _backend.get_template

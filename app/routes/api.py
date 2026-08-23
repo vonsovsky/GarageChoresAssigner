@@ -151,7 +151,7 @@ async def set_departure(user_id: str, body: DepartureIn):
     store.set_departed(user_id, body.departed)
     released = 0
     if body.departed:
-        for view in service.release_active_claims(user_id):
+        for view in await service.release_active_claims(user_id):
             released += 1
             await service.broadcast_local(
                 {"type": "task_claimed", "chore": view, "by": user_id,
@@ -225,7 +225,10 @@ async def create_chore(body: ChoreCreateIn):
 async def claim_chore(task_id: int, uid: str = Depends(require_uid)):
     if task_id not in upstream.tasks:
         raise HTTPException(status_code=404, detail="Unknown chore")
-    store.add_claim(task_id, uid)
+    try:
+        await upstream.ack(task_id, uid)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"Upstream claim failed: {exc}")
     view = service.build_chore_view(upstream.tasks[task_id])
     profile = store.get_profile(uid)
     name = (profile or {}).get("name", "friend")
@@ -249,7 +252,10 @@ async def assign_chore(task_id: int, body: AssignIn):
         if not top:
             raise HTTPException(status_code=409, detail="No eligible person available to auto-assign.")
         discord_id = top[0]
-    store.add_claim(task_id, discord_id)
+    try:
+        await upstream.ack(task_id, discord_id)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"Upstream assign failed: {exc}")
     view = service.build_chore_view(upstream.tasks[task_id])
     name = service.person_name(discord_id)
     await service.broadcast_local(
@@ -261,7 +267,10 @@ async def assign_chore(task_id: int, body: AssignIn):
 
 @router.post("/chores/{task_id}/unclaim")
 async def unclaim_chore(task_id: int, uid: str = Depends(require_uid)):
-    store.remove_claim(task_id, uid)
+    try:
+        await upstream.reject(task_id, uid)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"Upstream unclaim failed: {exc}")
     view = service.build_chore_view(upstream.tasks.get(task_id, {"id": task_id, "necessary_workers": 1}))
     await service.broadcast_local(
         {"type": "task_claimed", "chore": view, "by": uid,
@@ -275,7 +284,10 @@ async def unassign_chore(task_id: int, body: AssignIn):
     """Remove a specific person's assignment from a chore (anyone can manage)."""
     if not body.discord_id:
         raise HTTPException(status_code=422, detail="discord_id is required")
-    store.remove_claim(task_id, body.discord_id)
+    try:
+        await upstream.reject(task_id, body.discord_id)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"Upstream unassign failed: {exc}")
     view = service.build_chore_view(upstream.tasks.get(task_id, {"id": task_id, "necessary_workers": 1}))
     await service.broadcast_local(
         {"type": "task_claimed", "chore": view, "by": body.discord_id,

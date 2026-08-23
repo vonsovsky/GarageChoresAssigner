@@ -45,7 +45,7 @@ def build_chore_view(task: dict[str, Any]) -> dict[str, Any]:
         if minutes_to_deadline <= URGENT_DEADLINE_MIN:
             urgent = True
 
-    claimers = store.claims_for_task(task["id"])
+    claimers = task.get("acked") or []  # who's confirmed on it, from upstream
     directory = _person_directory()  # resolves both local profiles and upstream handles
     claimer_views = [
         {
@@ -97,7 +97,7 @@ def suggestions_for(task_id: int) -> dict[str, Any]:
     if not task:
         return {"top": [], "ranked": []}
     pool = build_person_pool(upstream.users, upstream.stats)
-    claimers = frozenset(store.claims_for_task(task_id))
+    claimers = frozenset(task.get("acked") or [])
     fully_claimed = len(claimers) >= task.get("necessary_workers", 1)
     return suggest(task, pool, claimed_ids=claimers, fully_claimed=fully_claimed)
 
@@ -123,7 +123,7 @@ def person_name(discord_id: str) -> str:
     return (info or {}).get("name") or discord_id
 
 
-def release_active_claims(discord_id: str) -> list[dict[str, Any]]:
+async def release_active_claims(discord_id: str) -> list[dict[str, Any]]:
     """Drop a person's claims on chores that are still active (not completed or
     cancelled), so those free up for reassignment. Completed chores are left on
     their record. Returns the updated views of the affected chores."""
@@ -131,15 +131,15 @@ def release_active_claims(discord_id: str) -> list[dict[str, Any]]:
     for task_id in _claims_by_user().get(discord_id, []):
         task = upstream.tasks.get(task_id)
         if task and _is_active(task):
-            store.remove_claim(task_id, discord_id)
-            affected.append(build_chore_view(task))
+            updated = await upstream.reject(task_id, discord_id)
+            affected.append(build_chore_view(updated or task))
     return affected
 
 
 def _claims_by_user() -> dict[str, list[int]]:
     per_user: dict[str, list[int]] = {}
-    for task_id, cids in store.all_claims().items():
-        for cid in cids:
+    for task_id, task in upstream.tasks.items():
+        for cid in (task.get("acked") or []):
             per_user.setdefault(cid, []).append(task_id)
     return per_user
 
@@ -227,7 +227,10 @@ async def on_upstream_event(event: dict[str, Any]) -> None:
     chore = event.get("chore")
     payload: dict[str, Any] = {"type": event.get("type")}
     if chore and isinstance(chore, dict) and "id" in chore:
-        view = build_chore_view(chore)
+        # Prefer the cached task: the upstream client re-fetches it on assignment
+        # events, so its `acked` array (who's on it) is current.
+        task = upstream.tasks.get(chore["id"], chore)
+        view = build_chore_view(task)
         payload["chore"] = view
         payload["suggestions"] = suggestions_for(chore["id"])["top"]
     payload["assignment"] = event.get("assignment")
