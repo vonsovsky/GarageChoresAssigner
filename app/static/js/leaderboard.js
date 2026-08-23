@@ -78,9 +78,6 @@ function render() {
     const active = r.performing_count
       ? el("span", { class: "badge suggest", style: "margin-left:8px" }, `${r.performing_count} in progress`)
       : null;
-    const left = r.departed
-      ? el("span", { class: "badge", style: "margin-left:8px" }, "🚪 left early")
-      : null;
 
     // Effort bar — the purple gradient motif, scaled to the leader. An empty
     // track is an honest "hasn't done anything yet".
@@ -88,7 +85,7 @@ function render() {
     const bar = el("div", { class: "lb-bar" }, el("span", { style: `width:${pct}%` }));
 
     const nameCell = el("td", {},
-      el("div", {}, el("strong", { style: r.departed ? "opacity:.6" : "" }, r.name), left, active),
+      el("div", {}, el("strong", {}, r.name), active),
       bar);
 
     const cls = "clickable" + (hasEffort && rank === 1 ? " podium-1" : "");

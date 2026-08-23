@@ -37,18 +37,17 @@ def build_person_pool(
 ) -> list[dict[str, Any]]:
     """Merge upstream users + stats with local profiles into one person list.
 
-    People marked as having left the trip early are excluded so they are never
-    suggested or auto-assigned (their leaderboard history is unaffected)."""
+    The upstream `/users` returns only present users, so people who left the trip
+    simply aren't there — no local departure tracking needed."""
     profiles = {p["discord_id"]: p for p in store.all_profiles()}
     manual = store.manual_minutes_by_user()
-    departed = store.departed_ids()
     committed = _committed_minutes()
     pool: list[dict[str, Any]] = []
 
     seen: set[str] = set()
     for u in users:
         did = u.get("discord_id")
-        if not did or did in departed:
+        if not did:
             continue
         seen.add(did)
         prof = profiles.get(did)
@@ -64,7 +63,6 @@ def build_person_pool(
                 "name": (prof or {}).get("name") or u.get("handle") or did,
                 "handle": u.get("handle") or (prof or {}).get("discord_handle") or "",
                 "capabilities": sorted(caps),
-                "max_capacity_min": (prof or {}).get("max_capacity_min", 240),
                 "workload_min": round(worked_min, 1),
                 "normalized_total": float(s.get("normalized_total", 0)),
                 "present_ticks": int(s.get("present_ticks", 0)),
@@ -75,7 +73,7 @@ def build_person_pool(
     # Include people who registered in the app but aren't in the upstream user
     # list yet (provisional "handle:" profiles) so they're still suggestible.
     for did, prof in profiles.items():
-        if did in seen or did in departed:
+        if did in seen:
             continue
         s = stats.get(did, {})
         worked_min = float(s.get("total_min", 0)) + manual.get(did, 0) + committed.get(did, 0)
@@ -85,7 +83,6 @@ def build_person_pool(
                 "name": prof.get("name") or did,
                 "handle": prof.get("discord_handle") or "",
                 "capabilities": sorted(set(prof.get("skills") or [])),
-                "max_capacity_min": prof.get("max_capacity_min", 240),
                 "workload_min": round(worked_min, 1),
                 "normalized_total": float(s.get("normalized_total", 0)),
                 "present_ticks": int(s.get("present_ticks", 0)),
@@ -95,14 +92,9 @@ def build_person_pool(
     return pool
 
 
-def _eligible(person: dict[str, Any], required_caps: list[str], task_time: int) -> bool:
-    # skill gate
-    if required_caps and not set(required_caps).issubset(set(person["capabilities"])):
-        return False
-    # capacity gate: already at or over the cap -> not eligible
-    if person["workload_min"] >= person["max_capacity_min"]:
-        return False
-    return True
+def _eligible(person: dict[str, Any], required_caps: list[str]) -> bool:
+    # skill gate: must have every required capability
+    return not required_caps or set(required_caps).issubset(set(person["capabilities"]))
 
 
 def suggest(
@@ -121,14 +113,11 @@ def suggest(
     `fully_claimed` chore suggests nobody (all worker slots are filled).
     """
     required_caps = task.get("necessary_capabilities") or []
-    task_time = task.get("estimated_time_min", 0)
 
     annotated = []
     for p in pool:
         p = dict(p)
-        p["eligible"] = _eligible(p, required_caps, task_time)
-        # remaining capacity is informative for the UI
-        p["remaining_min"] = max(0, p["max_capacity_min"] - p["workload_min"])
+        p["eligible"] = _eligible(p, required_caps)
         annotated.append(p)
 
     eligible = [p for p in annotated if p["eligible"]]

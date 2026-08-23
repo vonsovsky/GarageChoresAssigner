@@ -39,7 +39,6 @@ CREATE TABLE IF NOT EXISTS profiles (
     name            TEXT NOT NULL,
     discord_handle  TEXT NOT NULL,
     skills          TEXT NOT NULL DEFAULT '[]',   -- json array of capability strings
-    max_capacity_min INTEGER NOT NULL DEFAULT 240, -- daily workload cap in minutes
     created         TEXT NOT NULL,
     updated         TEXT NOT NULL
 );
@@ -57,11 +56,6 @@ CREATE TABLE IF NOT EXISTS manual_work (
     description TEXT NOT NULL,
     minutes     INTEGER NOT NULL,
     created     TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS departures (
-    discord_id TEXT PRIMARY KEY,
-    since      TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS templates (
@@ -118,23 +112,21 @@ def upsert_profile(
     name: str,
     discord_handle: str,
     skills: list[str],
-    max_capacity_min: int,
 ) -> dict[str, Any]:
     with _lock:
         conn = get_conn()
         now = _now()
         conn.execute(
             """
-            INSERT INTO profiles (discord_id, name, discord_handle, skills, max_capacity_min, created, updated)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO profiles (discord_id, name, discord_handle, skills, created, updated)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(discord_id) DO UPDATE SET
                 name=excluded.name,
                 discord_handle=excluded.discord_handle,
                 skills=excluded.skills,
-                max_capacity_min=excluded.max_capacity_min,
                 updated=excluded.updated
             """,
-            (discord_id, name, discord_handle, json.dumps(skills), max_capacity_min, now, now),
+            (discord_id, name, discord_handle, json.dumps(skills), now, now),
         )
         conn.commit()
     return get_profile(discord_id)  # type: ignore[return-value]
@@ -241,9 +233,9 @@ def manual_minutes_by_user() -> dict[str, int]:
 # --- merge two identities ----------------------------------------------------
 
 def merge_user(from_id: str, to_id: str) -> dict[str, int]:
-    """Fold `from_id` into `to_id`: move manual work and departure onto the
-    canonical id and delete the duplicate profile. Returns counts moved.
-    (Claims live upstream now, keyed by discord_id, so they aren't touched here.)"""
+    """Fold `from_id` into `to_id`: move manual work onto the canonical id and
+    delete the duplicate profile. Returns counts moved. (Claims live upstream
+    now, keyed by discord_id, so they aren't touched here.)"""
     with _lock:
         conn = get_conn()
         manual = conn.execute(
@@ -252,39 +244,9 @@ def merge_user(from_id: str, to_id: str) -> dict[str, int]:
         conn.execute(
             "UPDATE manual_work SET discord_id = ? WHERE discord_id = ?", (to_id, from_id)
         )
-        dep = conn.execute(
-            "SELECT since FROM departures WHERE discord_id = ?", (from_id,)
-        ).fetchone()
-        if dep:
-            conn.execute(
-                "INSERT OR IGNORE INTO departures (discord_id, since) VALUES (?, ?)",
-                (to_id, dep["since"]),
-            )
-            conn.execute("DELETE FROM departures WHERE discord_id = ?", (from_id,))
         conn.execute("DELETE FROM profiles WHERE discord_id = ?", (from_id,))
         conn.commit()
     return {"manual_work": manual}
-
-
-# --- departures (people who left the trip early) -----------------------------
-
-def set_departed(discord_id: str, departed: bool) -> None:
-    with _lock:
-        conn = get_conn()
-        if departed:
-            conn.execute(
-                "INSERT OR IGNORE INTO departures (discord_id, since) VALUES (?, ?)",
-                (discord_id, _now()),
-            )
-        else:
-            conn.execute("DELETE FROM departures WHERE discord_id = ?", (discord_id,))
-        conn.commit()
-
-
-def departed_ids() -> set[str]:
-    with _lock:
-        rows = get_conn().execute("SELECT discord_id FROM departures").fetchall()
-    return {r["discord_id"] for r in rows}
 
 
 # --- chore templates --------------------------------------------------------

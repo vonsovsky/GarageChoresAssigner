@@ -10,7 +10,6 @@ class ProfileIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     discord_handle: str = Field(min_length=1, max_length=80)
     skills: list[str] = Field(default_factory=list)
-    max_capacity_min: int = Field(default=240, ge=0, le=10000)
 
 
 class ChoreCreateIn(BaseModel):
@@ -33,9 +32,8 @@ class ManualWorkIn(BaseModel):
 
 
 class ProfileSettingsIn(BaseModel):
-    # Name/handle come from Discord; only these are user-editable.
+    # Name/handle come from Discord; only skills are user-editable.
     skills: list[str] = Field(default_factory=list)
-    max_capacity_min: int = Field(default=240, ge=0, le=10000)
 
 
 class LoginIn(BaseModel):
@@ -45,10 +43,6 @@ class LoginIn(BaseModel):
 class AssignIn(BaseModel):
     # None → auto-assign the lowest-workload eligible person
     discord_id: Optional[str] = None
-
-
-class DepartureIn(BaseModel):
-    departed: bool
 
 
 class MergeIn(BaseModel):

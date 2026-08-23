@@ -18,7 +18,6 @@ from ..config import settings
 from ..models import (
     AssignIn,
     ChoreCreateIn,
-    DepartureIn,
     ManualWorkIn,
     ProfileSettingsIn,
     TemplateIn,
@@ -49,7 +48,6 @@ async def update_me(body: ProfileSettingsIn, uid: str = Depends(require_uid)):
         name=existing.get("name") or uid,
         discord_handle=existing.get("discord_handle") or "",
         skills=body.skills,
-        max_capacity_min=body.max_capacity_min,
     )
     await service.broadcast_local({"type": "profile_updated", "discord_id": uid})
     return {"profile": profile}
@@ -141,24 +139,6 @@ async def leaderboard():
 @router.get("/users/{user_id:path}")
 async def user_detail(user_id: str):
     return service.user_detail(user_id)
-
-
-@router.post("/users/{user_id:path}/departure")
-async def set_departure(user_id: str, body: DepartureIn):
-    """Mark a person as having left the trip early (or back). Departed people
-    keep their leaderboard history but are no longer suggested or auto-assigned,
-    and their unfinished chores are released so they can be reassigned."""
-    store.set_departed(user_id, body.departed)
-    released = 0
-    if body.departed:
-        for view in await service.release_active_claims(user_id):
-            released += 1
-            await service.broadcast_local(
-                {"type": "task_claimed", "chore": view, "by": user_id,
-                 "suggestions": service.suggestions_for(view["id"])["top"]}
-            )
-    await service.broadcast_local({"type": "profile_updated", "discord_id": user_id})
-    return {"discord_id": user_id, "departed": body.departed, "released": released}
 
 
 # --- chores -----------------------------------------------------------------

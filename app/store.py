@@ -42,7 +42,5 @@ upsert_template = _backend.upsert_template
 delete_template = _backend.delete_template
 template_key_exists = _backend.template_key_exists
 
-# --- departures / merge ---
-set_departed = _backend.set_departed
-departed_ids = _backend.departed_ids
+# --- merge ---
 merge_user = _backend.merge_user

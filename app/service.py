@@ -123,19 +123,6 @@ def person_name(discord_id: str) -> str:
     return (info or {}).get("name") or discord_id
 
 
-async def release_active_claims(discord_id: str) -> list[dict[str, Any]]:
-    """Drop a person's claims on chores that are still active (not completed or
-    cancelled), so those free up for reassignment. Completed chores are left on
-    their record. Returns the updated views of the affected chores."""
-    affected: list[dict[str, Any]] = []
-    for task_id in _claims_by_user().get(discord_id, []):
-        task = upstream.tasks.get(task_id)
-        if task and _is_active(task):
-            updated = await upstream.reject(task_id, discord_id)
-            affected.append(build_chore_view(updated or task))
-    return affected
-
-
 def _claims_by_user() -> dict[str, list[int]]:
     per_user: dict[str, list[int]] = {}
     for task_id, task in upstream.tasks.items():
@@ -149,7 +136,6 @@ def leaderboard() -> list[dict[str, Any]]:
     spent on them, and how many are still in progress."""
     directory = _person_directory()
     per_user = _claims_by_user()
-    departed = store.departed_ids()
     # include anyone who has claims even if their profile/user is gone
     for did in per_user:
         directory.setdefault(did, {"name": did, "handle": ""})
@@ -174,7 +160,6 @@ def leaderboard() -> list[dict[str, Any]]:
                 "performed_count": performed,
                 "performing_count": performing,
                 "time_spent_min": time_spent,
-                "departed": did in departed,
             }
         )
     # default order: most time spent first
@@ -207,7 +192,6 @@ def user_detail(discord_id: str) -> dict[str, Any]:
         "performing": performing,
         "performed": performed,
         "time_spent_min": sum(v["estimated_time_min"] for v in performed),
-        "departed": discord_id in store.departed_ids(),
     }
 
 

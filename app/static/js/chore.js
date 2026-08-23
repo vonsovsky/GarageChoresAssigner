@@ -73,9 +73,7 @@ function renderSuggestions(sug, chore) {
   const claimerIds = new Set((chore.claimers || []).map((c) => c.discord_id));
   ranked.forEach((p) => {
     const pct = Math.round((p.workload_min / max) * 100);
-    const reason = !p.eligible
-      ? (chore.necessary_capabilities.some((s) => !(p.capabilities || []).includes(s)) ? "missing skill" : "over capacity")
-      : "";
+    const reason = !p.eligible ? "missing skill" : "";
     // Offer an Assign button for eligible people not already on it, while workers are needed.
     let action = null;
     if (claimerIds.has(p.discord_id)) action = el("span", { class: "badge claimed" }, "✓ on it");

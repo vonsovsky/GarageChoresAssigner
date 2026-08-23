@@ -9,11 +9,6 @@ async function init() {
 
   document.getElementById("name").textContent = profile.name;
   document.getElementById("handle").textContent = profile.discord_handle ? "@" + profile.discord_handle : "";
-  const cap = document.getElementById("cap");
-  cap.value = profile.max_capacity_min;
-  const capVal = document.getElementById("cap-val");
-  capVal.textContent = fmtMin(+cap.value);
-  cap.addEventListener("input", () => (capVal.textContent = fmtMin(+cap.value)));
 
   const { skills } = await API.get("/api/skills");
   const box = document.getElementById("skills");
@@ -37,10 +32,7 @@ function toggle(chip, skill) {
 
 async function save(ev) {
   ev.preventDefault();
-  const body = {
-    skills: [...selectedSkills],
-    max_capacity_min: parseInt(document.getElementById("cap").value, 10),
-  };
+  const body = { skills: [...selectedSkills] };
   try { await API.put("/api/me", body); showToast("Saved ✓"); loadWorkload(); }
   catch (e) { showError(e); }
 }
@@ -54,9 +46,10 @@ async function loadWorkload() {
   const me = people.find((p) => p.discord_id === myUid);
   const box = document.getElementById("workload");
   if (!me) { box.innerHTML = '<p class="muted">No workload data yet.</p>'; return; }
-  const pct = Math.min(100, Math.round((me.workload_min / me.max_capacity_min) * 100));
+  const max = Math.max(1, ...people.map((p) => p.workload_min));
+  const pct = Math.round((me.workload_min / max) * 100);
   box.innerHTML = "";
-  box.appendChild(el("p", {}, `${me.workload_min} / ${me.max_capacity_min} min used (${pct}%)`));
+  box.appendChild(el("p", {}, `${fmtMin(me.workload_min) || "0 min"} of chores so far`));
   box.appendChild(el("div", { class: "bar" }, el("span", { style: `width:${pct}%` })));
   if (me.capabilities?.length) box.appendChild(el("p", { class: "muted", style: "margin-top:8px" }, "Skills: " + me.capabilities.join(", ")));
 }
