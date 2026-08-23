@@ -11,6 +11,7 @@ from ..auth import current_uid, require_uid
 from ..discord import fetch_skill_capabilities
 from ..catalog import (
     FUNNY_ACK_MESSAGES,
+    MANUAL_MARK,
     SKILLS,
     SPICY,
     size_for,
@@ -44,14 +45,49 @@ async def me(request: Request):
 
 @router.get("/me/manual-work")
 async def list_manual(uid: str = Depends(require_uid)):
-    return {"entries": store.manual_work_for(uid)}
+    """The user's off-book work: completed, self-acked tasks marked as manual,
+    read from the upstream task cache (no local storage)."""
+    entries = [
+        {
+            "id": t["id"],
+            "description": (t.get("name") or "")[len(MANUAL_MARK):].strip(),
+            "minutes": t.get("estimated_time_min", 0),
+            "created": t.get("completed"),
+        }
+        for t in upstream.tasks.values()
+        if t.get("completed")
+        and uid in (t.get("acked") or [])
+        and (t.get("name") or "").startswith(MANUAL_MARK)
+    ]
+    entries.sort(key=lambda e: e["created"] or "", reverse=True)
+    return {"entries": entries}
 
 
 @router.post("/me/manual-work")
 async def add_manual(body: ManualWorkIn, uid: str = Depends(require_uid)):
-    entry = store.add_manual_work(uid, body.description, body.minutes)
+    """Record off-book work upstream (the documented pattern): create a chore,
+    self-ack it, and mark it done — so the minutes land in the upstream stats and
+    flow into the leaderboard/workload like any other completed chore."""
+    task = None
+    try:
+        task = await upstream.create_task({
+            "name": f"{MANUAL_MARK} {body.description}",
+            "necessary_workers": 1,
+            "estimated_time_min": body.minutes,
+            "assignment_timeout_min": 15,
+            "necessary_capabilities": None,
+        })
+        await upstream.ack(task["id"], uid)
+        await upstream.mark_done(task["id"])
+    except Exception as exc:  # noqa: BLE001
+        if task:  # best-effort cleanup of a half-created task
+            try:
+                await upstream.delete_task(task["id"])
+            except Exception:  # noqa: BLE001
+                pass
+        raise HTTPException(status_code=502, detail=f"Upstream log failed: {exc}")
     await service.broadcast_local({"type": "workload_updated", "discord_id": uid})
-    return {"entry": entry}
+    return {"entry": {"id": task["id"], "description": body.description, "minutes": body.minutes}}
 
 
 # --- reference data ---------------------------------------------------------

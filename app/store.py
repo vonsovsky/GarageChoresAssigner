@@ -30,11 +30,6 @@ set_chore_meta = _backend.set_chore_meta
 get_chore_meta = _backend.get_chore_meta
 all_chore_meta = _backend.all_chore_meta
 
-# --- manual (out-of-scope) work ---
-add_manual_work = _backend.add_manual_work
-manual_work_for = _backend.manual_work_for
-manual_minutes_by_user = _backend.manual_minutes_by_user
-
 # --- templates ---
 all_templates = _backend.all_templates
 get_template = _backend.get_template

@@ -13,6 +13,10 @@ SKILLS = ["cooking", "grilling", "hookah_master", "cleaning", "driving"]
 # the API with peppers are recognised too.
 SPICY = "🌶️"
 MAX_SPICY = 3
+
+# Prefixes the name of an off-book "manual work" chore (logged via create →
+# self-ack → done), so those entries are identifiable in the person's history.
+MANUAL_MARK = "📝"
 _PEPPER = "\U0001f336"  # base codepoint, matched with or without the variation selector
 
 

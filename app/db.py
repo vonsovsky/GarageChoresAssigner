@@ -1,10 +1,11 @@
 """SQLite persistence for the data the upstream chores API does not hold:
-local profiles, per-chore metadata (urgent flag, size), and manual out-of-scope
-work.
+local profiles (name/handle cache), per-chore metadata (size, template link),
+and chore templates.
 
 The upstream API is the source of truth for tasks/assignments/stats (claims are
-its `acked` arrays); this layer only augments it. Scale is tiny (~15 users), so
-a single shared connection guarded by a lock is plenty.
+its `acked` arrays; off-book work is logged as completed tasks); this layer only
+augments it. Scale is tiny (~15 users), so a single shared connection guarded by
+a lock is plenty.
 """
 from __future__ import annotations
 
@@ -46,14 +47,6 @@ CREATE TABLE IF NOT EXISTS chore_meta (
     task_id      INTEGER PRIMARY KEY,
     size         TEXT NOT NULL DEFAULT 'medium',  -- small|medium|large (derived, overridable)
     template_key TEXT
-);
-
-CREATE TABLE IF NOT EXISTS manual_work (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    discord_id  TEXT NOT NULL,
-    description TEXT NOT NULL,
-    minutes     INTEGER NOT NULL,
-    created     TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS templates (
@@ -185,53 +178,19 @@ def all_chore_meta() -> dict[int, dict[str, Any]]:
     return {r["task_id"]: dict(r) for r in rows}
 
 
-# --- manual (out-of-scope) work ---------------------------------------------
-
-def add_manual_work(discord_id: str, description: str, minutes: int) -> dict[str, Any]:
-    with _lock:
-        conn = get_conn()
-        cur = conn.execute(
-            "INSERT INTO manual_work (discord_id, description, minutes, created) VALUES (?, ?, ?, ?)",
-            (discord_id, description, minutes, _now()),
-        )
-        conn.commit()
-        row = conn.execute("SELECT * FROM manual_work WHERE id = ?", (cur.lastrowid,)).fetchone()
-    return dict(row)
-
-
-def manual_work_for(discord_id: str) -> list[dict[str, Any]]:
-    with _lock:
-        rows = get_conn().execute(
-            "SELECT * FROM manual_work WHERE discord_id = ? ORDER BY created DESC", (discord_id,)
-        ).fetchall()
-    return [dict(r) for r in rows]
-
-
-def manual_minutes_by_user() -> dict[str, int]:
-    with _lock:
-        rows = get_conn().execute(
-            "SELECT discord_id, COALESCE(SUM(minutes),0) AS m FROM manual_work GROUP BY discord_id"
-        ).fetchall()
-    return {r["discord_id"]: r["m"] for r in rows}
-
-
 # --- merge two identities ----------------------------------------------------
 
 def merge_user(from_id: str, to_id: str) -> dict[str, int]:
-    """Fold `from_id` into `to_id`: move manual work onto the canonical id and
-    delete the duplicate profile. Returns counts moved. (Claims live upstream
-    now, keyed by discord_id, so they aren't touched here.)"""
+    """Fold `from_id` into `to_id` by deleting the duplicate profile. Returns the
+    number of profiles removed. (Claims and off-book work live upstream now,
+    keyed by discord_id, so they aren't touched here.)"""
     with _lock:
         conn = get_conn()
-        manual = conn.execute(
-            "SELECT COUNT(*) FROM manual_work WHERE discord_id = ?", (from_id,)
-        ).fetchone()[0]
-        conn.execute(
-            "UPDATE manual_work SET discord_id = ? WHERE discord_id = ?", (to_id, from_id)
-        )
-        conn.execute("DELETE FROM profiles WHERE discord_id = ?", (from_id,))
+        removed = conn.execute(
+            "DELETE FROM profiles WHERE discord_id = ?", (from_id,)
+        ).rowcount
         conn.commit()
-    return {"manual_work": manual}
+    return {"profiles": removed}
 
 
 # --- chore templates --------------------------------------------------------

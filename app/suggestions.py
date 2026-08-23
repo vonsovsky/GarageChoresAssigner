@@ -1,19 +1,16 @@
 """Ranking of who should take a chore.
 
 Per the agreed design:
-  * Required skill and remaining capacity are HARD eligibility filters —
-    someone who lacks a required capability, or who is already at/over their
-    max capacity, is not suggested at all.
-  * Among the eligible, we rank by LOWEST current workload (upstream
-    `normalized_total`) so work stays balanced. The top 3 are the "notified"
-    people (highlighted / sound on their screens).
+  * Required skill is a HARD eligibility filter — someone who lacks a required
+    capability is not suggested at all.
+  * Among the eligible, we rank by LOWEST current workload so work stays
+    balanced. The top 3 are the "notified" people (highlighted / sound on their
+    screens).
 """
 from __future__ import annotations
 
 from typing import Any
 
-from . import store
-from .config import settings
 from .upstream import upstream
 
 
@@ -37,10 +34,9 @@ def build_person_pool(
 ) -> list[dict[str, Any]]:
     """Build the suggestion pool purely from the upstream API: present users
     (`/users`) with their Discord-role capabilities, ranked by workload from
-    `/stats` plus locally-logged manual work and in-progress (acked) claims.
+    `/stats` plus in-progress (acked) claims not yet in the stats.
 
     `/users` returns only present users, so people who left simply aren't there."""
-    manual = store.manual_minutes_by_user()
     committed = _committed_minutes()
     pool: list[dict[str, Any]] = []
 
@@ -49,7 +45,7 @@ def build_person_pool(
         if not did:
             continue
         s = stats.get(did, {})
-        worked_min = float(s.get("total_min", 0)) + manual.get(did, 0) + committed.get(did, 0)
+        worked_min = float(s.get("total_min", 0)) + committed.get(did, 0)
         pool.append(
             {
                 "discord_id": did,
