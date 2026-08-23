@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .. import service, store
 from ..auth import current_uid, require_uid
+from ..discord import fetch_skill_capabilities
 from ..catalog import (
     FUNNY_ACK_MESSAGES,
     SKILLS,
@@ -95,7 +96,13 @@ async def delete_template(key: str):
 
 @router.get("/skills")
 async def skills():
-    return {"skills": SKILLS}
+    """Skill options for the chore/template capability pickers, sourced from the
+    guild's `skill::` Discord roles (the upstream convention). Falls back to the
+    capabilities present users report, then the built-in list for local dev."""
+    caps = await fetch_skill_capabilities()
+    if not caps:
+        caps = sorted({c for u in upstream.users for c in (u.get("capabilities") or [])})
+    return {"skills": caps or SKILLS}
 
 
 @router.get("/stats")

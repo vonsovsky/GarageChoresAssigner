@@ -40,6 +40,10 @@ class Settings:
     DISCORD_PAID_ROLE: str = os.getenv("DISCORD_PAID_ROLE", "")
     DISCORD_ADMIN_ROLE: str = os.getenv("DISCORD_ADMIN_ROLE", "")
     DISCORD_PRESENT_ROLE: str = os.getenv("DISCORD_PRESENT_ROLE", "")
+    # Prefix marking a Discord role as a skill/capability (upstream default
+    # `skill::`); the bare name after it is the capability (e.g. skill::cooking
+    # → cooking), matching what upstream /users reports.
+    DISCORD_SKILL_PREFIX: str = os.getenv("DISCORD_SKILL_PREFIX", "skill::")
 
     SESSION_SECRET: str = os.getenv("SESSION_SECRET", "dev-insecure-change-me")
     # Shared password so the TV/tablet can open the dashboard without OAuth.

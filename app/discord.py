@@ -47,6 +47,22 @@ async def _guild_member(client: httpx.AsyncClient, discord_id: str) -> Optional[
     return resp.json()
 
 
+async def fetch_skill_capabilities() -> list[str]:
+    """Capability names from the guild's `skill::`-prefixed roles, with the
+    prefix stripped (e.g. `skill::cooking` → `cooking`) to match what upstream
+    `/users` reports. Returns [] when Discord isn't configured or on error."""
+    if not settings.role_gating_configured:
+        return []
+    prefix = settings.DISCORD_SKILL_PREFIX
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            names = await _guild_role_ids(client)  # cached ~10 min
+    except Exception as exc:  # noqa: BLE001
+        log.warning("fetch_skill_capabilities failed: %s", exc)
+        return []
+    return sorted(n[len(prefix):] for n in names if n.startswith(prefix))
+
+
 async def fetch_member_roles(discord_id: str) -> dict[str, Any]:
     """Return role flags for a member.
 
