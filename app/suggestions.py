@@ -35,58 +35,30 @@ def build_person_pool(
     users: list[dict[str, Any]],
     stats: dict[str, dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Merge upstream users + stats with local profiles into one person list.
+    """Build the suggestion pool purely from the upstream API: present users
+    (`/users`) with their Discord-role capabilities, ranked by workload from
+    `/stats` plus locally-logged manual work and in-progress (acked) claims.
 
-    The upstream `/users` returns only present users, so people who left the trip
-    simply aren't there — no local departure tracking needed."""
-    profiles = {p["discord_id"]: p for p in store.all_profiles()}
+    `/users` returns only present users, so people who left simply aren't there."""
     manual = store.manual_minutes_by_user()
     committed = _committed_minutes()
     pool: list[dict[str, Any]] = []
 
-    seen: set[str] = set()
     for u in users:
         did = u.get("discord_id")
         if not did:
             continue
-        seen.add(did)
-        prof = profiles.get(did)
-        s = stats.get(did, {})
-        # capabilities are the union of upstream roles and locally-set skills
-        caps = set(u.get("capabilities") or [])
-        if prof:
-            caps |= set(prof.get("skills") or [])
-        worked_min = float(s.get("total_min", 0)) + manual.get(did, 0) + committed.get(did, 0)
-        pool.append(
-            {
-                "discord_id": did,
-                "name": (prof or {}).get("name") or u.get("handle") or did,
-                "handle": u.get("handle") or (prof or {}).get("discord_handle") or "",
-                "capabilities": sorted(caps),
-                "workload_min": round(worked_min, 1),
-                "normalized_total": float(s.get("normalized_total", 0)),
-                "present_ticks": int(s.get("present_ticks", 0)),
-                "has_profile": prof is not None,
-            }
-        )
-
-    # Include people who registered in the app but aren't in the upstream user
-    # list yet (provisional "handle:" profiles) so they're still suggestible.
-    for did, prof in profiles.items():
-        if did in seen:
-            continue
         s = stats.get(did, {})
         worked_min = float(s.get("total_min", 0)) + manual.get(did, 0) + committed.get(did, 0)
         pool.append(
             {
                 "discord_id": did,
-                "name": prof.get("name") or did,
-                "handle": prof.get("discord_handle") or "",
-                "capabilities": sorted(set(prof.get("skills") or [])),
+                "name": u.get("handle") or did,
+                "handle": u.get("handle") or "",
+                "capabilities": sorted(set(u.get("capabilities") or [])),
                 "workload_min": round(worked_min, 1),
                 "normalized_total": float(s.get("normalized_total", 0)),
                 "present_ticks": int(s.get("present_ticks", 0)),
-                "has_profile": True,
             }
         )
     return pool

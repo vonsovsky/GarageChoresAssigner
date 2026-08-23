@@ -6,12 +6,6 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class ProfileIn(BaseModel):
-    name: str = Field(min_length=1, max_length=80)
-    discord_handle: str = Field(min_length=1, max_length=80)
-    skills: list[str] = Field(default_factory=list)
-
-
 class ChoreCreateIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     necessary_workers: int = Field(default=1, ge=1, le=20)
@@ -29,11 +23,6 @@ class ChoreCreateIn(BaseModel):
 class ManualWorkIn(BaseModel):
     description: str = Field(min_length=1, max_length=200)
     minutes: int = Field(ge=1, le=1000)
-
-
-class ProfileSettingsIn(BaseModel):
-    # Name/handle come from Discord; only skills are user-editable.
-    skills: list[str] = Field(default_factory=list)
 
 
 class LoginIn(BaseModel):

@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS profiles (
     discord_id      TEXT PRIMARY KEY,
     name            TEXT NOT NULL,
     discord_handle  TEXT NOT NULL,
-    skills          TEXT NOT NULL DEFAULT '[]',   -- json array of capability strings
     created         TEXT NOT NULL,
     updated         TEXT NOT NULL
 );
@@ -111,22 +110,20 @@ def upsert_profile(
     discord_id: str,
     name: str,
     discord_handle: str,
-    skills: list[str],
 ) -> dict[str, Any]:
     with _lock:
         conn = get_conn()
         now = _now()
         conn.execute(
             """
-            INSERT INTO profiles (discord_id, name, discord_handle, skills, created, updated)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO profiles (discord_id, name, discord_handle, created, updated)
+            VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(discord_id) DO UPDATE SET
                 name=excluded.name,
                 discord_handle=excluded.discord_handle,
-                skills=excluded.skills,
                 updated=excluded.updated
             """,
-            (discord_id, name, discord_handle, json.dumps(skills), now, now),
+            (discord_id, name, discord_handle, now, now),
         )
         conn.commit()
     return get_profile(discord_id)  # type: ignore[return-value]
@@ -155,9 +152,7 @@ def all_profiles() -> list[dict[str, Any]]:
 
 
 def _profile_row(row: sqlite3.Row) -> dict[str, Any]:
-    d = dict(row)
-    d["skills"] = json.loads(d.get("skills") or "[]")
-    return d
+    return dict(row)
 
 
 # --- chore metadata ---------------------------------------------------------

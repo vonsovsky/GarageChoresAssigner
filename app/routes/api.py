@@ -19,7 +19,6 @@ from ..models import (
     AssignIn,
     ChoreCreateIn,
     ManualWorkIn,
-    ProfileSettingsIn,
     TemplateIn,
 )
 from ..suggestions import build_person_pool
@@ -38,19 +37,6 @@ async def me(request: Request):
     if not uid:
         return {"profile": None}
     return {"profile": store.get_profile(uid), "discord_id": uid}
-
-
-@router.put("/me")
-async def update_me(body: ProfileSettingsIn, uid: str = Depends(require_uid)):
-    existing = store.get_profile(uid) or {}
-    profile = store.upsert_profile(
-        discord_id=uid,
-        name=existing.get("name") or uid,
-        discord_handle=existing.get("discord_handle") or "",
-        skills=body.skills,
-    )
-    await service.broadcast_local({"type": "profile_updated", "discord_id": uid})
-    return {"profile": profile}
 
 
 @router.get("/me/manual-work")

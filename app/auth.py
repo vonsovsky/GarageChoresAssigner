@@ -77,7 +77,7 @@ def _avatar_url(profile: dict[str, Any]) -> Optional[str]:
 def _login_user(request: Request, response, discord_id: str, name: str,
                 handle: str, avatar_url: Optional[str], is_admin: bool) -> None:
     """Store identity in the session + legacy cookie, and keep a local profile
-    cache (without clobbering the person's saved skills)."""
+    cache of name/handle."""
     request.session["user"] = {
         "discord_id": discord_id, "name": name,
         "avatar_url": avatar_url, "is_admin": is_admin,
@@ -85,12 +85,10 @@ def _login_user(request: Request, response, discord_id: str, name: str,
     request.session["discord_id"] = discord_id
     response.set_cookie(COOKIE, discord_id, max_age=60 * 60 * 24 * 14, samesite="lax")
 
-    existing = store.get_profile(discord_id)
     store.upsert_profile(
         discord_id=discord_id,
         name=name,
         discord_handle=handle,
-        skills=(existing or {}).get("skills", []),
     )
 
 
