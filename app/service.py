@@ -4,6 +4,7 @@ upstream events to our own WebSocket fan-out.
 """
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -224,3 +225,47 @@ async def on_upstream_event(event: dict[str, Any]) -> None:
 async def broadcast_local(message: dict[str, Any]) -> None:
     """Broadcast a locally-originated change (claim, profile edit, etc.)."""
     await manager.broadcast(message)
+
+
+def _chore_signature(task: dict[str, Any]) -> tuple:
+    """A cheap fingerprint of the fields that, when changed, should be pushed to
+    clients — so the reconcile poll only broadcasts on real changes."""
+    return (
+        _is_active(task),
+        task.get("name"),
+        task.get("completed"),
+        task.get("cancelled"),
+        task.get("necessary_workers"),
+        task.get("estimated_time_min"),
+        task.get("deadline"),
+        tuple(task.get("acked") or []),
+    )
+
+
+async def reconcile_and_broadcast() -> None:
+    """Periodic safety net: pull the upstream truth and push out anything the
+    live WebSocket stream may have missed — e.g. a chore completed or claimed via
+    Discord or directly over the API. The upstream is the source of truth."""
+    before = {tid: _chore_signature(t) for tid, t in upstream.tasks.items()}
+    await asyncio.gather(
+        upstream.refresh_tasks(), upstream.refresh_users(), upstream.refresh_stats()
+    )
+    after = upstream.tasks
+
+    # Chores that disappeared or are no longer active → tell clients they're off
+    # the board (same shape the app emits when marking done itself).
+    for tid, sig in before.items():
+        task = after.get(tid)
+        if (task is None or not _is_active(task)) and sig[0]:  # sig[0] == was active
+            await broadcast_local({"type": "task_done", "chore": {"id": tid}})
+
+    # New or changed active chores → push a fresh enriched view.
+    for tid, task in after.items():
+        if not _is_active(task):
+            continue
+        if before.get(tid) != _chore_signature(task):
+            await broadcast_local({
+                "type": "task_updated",
+                "chore": build_chore_view(task),
+                "suggestions": suggestions_for(tid)["top"],
+            })

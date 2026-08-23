@@ -26,13 +26,13 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 async def _poll_loop() -> None:
-    """Fallback refresh so tasks/stats/users stay coherent even if the upstream
-    WebSocket is quiet or an event is missed (e.g. changes made via Discord)."""
+    """Fallback reconcile so tasks/stats/users stay coherent — and connected
+    clients stay updated — even if the upstream WebSocket is quiet or an event is
+    missed (e.g. a chore completed or claimed via Discord or directly over the
+    API). Diffs the refreshed upstream state and broadcasts what changed."""
     while True:
         await asyncio.sleep(30)
-        await asyncio.gather(
-            upstream.refresh_tasks(), upstream.refresh_users(), upstream.refresh_stats()
-        )
+        await service.reconcile_and_broadcast()
 
 
 async def _heartbeat_loop() -> None:
