@@ -50,8 +50,9 @@
         <input id="deadline" type="datetime-local" />
       </div>
       <div>
-        <label>Urgent?</label>
-        <div class="chiprow"><button type="button" class="chip" id="urgent" aria-pressed="false">🔥 Mark urgent</button></div>
+        <label for="spiciness">Urgency: <span id="spiciness-val">not urgent</span></label>
+        <input id="spiciness" type="range" min="0" max="3" step="1" value="0" />
+        <p class="muted" style="font-size:.82rem;margin:6px 0 0">🌶️ in the name flags priority — more peppers, more urgent.</p>
       </div>
     </div>
 

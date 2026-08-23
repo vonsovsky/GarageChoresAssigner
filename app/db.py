@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 CREATE TABLE IF NOT EXISTS chore_meta (
     task_id      INTEGER PRIMARY KEY,
-    urgent       INTEGER NOT NULL DEFAULT 0,
     size         TEXT NOT NULL DEFAULT 'medium',  -- small|medium|large (derived, overridable)
     template_key TEXT
 );
@@ -157,17 +156,17 @@ def _profile_row(row: sqlite3.Row) -> dict[str, Any]:
 
 # --- chore metadata ---------------------------------------------------------
 
-def set_chore_meta(task_id: int, urgent: bool, size: str, template_key: Optional[str]) -> None:
+def set_chore_meta(task_id: int, size: str, template_key: Optional[str]) -> None:
     with _lock:
         conn = get_conn()
         conn.execute(
             """
-            INSERT INTO chore_meta (task_id, urgent, size, template_key)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO chore_meta (task_id, size, template_key)
+            VALUES (?, ?, ?)
             ON CONFLICT(task_id) DO UPDATE SET
-                urgent=excluded.urgent, size=excluded.size, template_key=excluded.template_key
+                size=excluded.size, template_key=excluded.template_key
             """,
-            (task_id, 1 if urgent else 0, size, template_key),
+            (task_id, size, template_key),
         )
         conn.commit()
 
@@ -177,22 +176,13 @@ def get_chore_meta(task_id: int) -> Optional[dict[str, Any]]:
         row = get_conn().execute(
             "SELECT * FROM chore_meta WHERE task_id = ?", (task_id,)
         ).fetchone()
-    if not row:
-        return None
-    d = dict(row)
-    d["urgent"] = bool(d["urgent"])
-    return d
+    return dict(row) if row else None
 
 
 def all_chore_meta() -> dict[int, dict[str, Any]]:
     with _lock:
         rows = get_conn().execute("SELECT * FROM chore_meta").fetchall()
-    out: dict[int, dict[str, Any]] = {}
-    for r in rows:
-        d = dict(r)
-        d["urgent"] = bool(d["urgent"])
-        out[d["task_id"]] = d
-    return out
+    return {r["task_id"]: dict(r) for r in rows}
 
 
 # --- manual (out-of-scope) work ---------------------------------------------

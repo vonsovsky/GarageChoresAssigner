@@ -8,6 +8,18 @@ from typing import Any
 # Canonical expertise/skill strings used as `necessary_capabilities`.
 SKILLS = ["cooking", "grilling", "hookah_master", "cleaning", "driving"]
 
+# Urgency convention (upstream garage-trip-chores): 1–3 🌶️ in the chore *name*
+# flag priority. The name is the source of truth, so chores made via Discord or
+# the API with peppers are recognised too.
+SPICY = "🌶️"
+MAX_SPICY = 3
+_PEPPER = "\U0001f336"  # base codepoint, matched with or without the variation selector
+
+
+def spiciness_of(name: str) -> int:
+    """How many 🌶️ are in a chore name (capped at MAX_SPICY)."""
+    return min((name or "").count(_PEPPER), MAX_SPICY)
+
 # Preset chores from the spec. `scales_with_headcount` chores get longer the
 # more mouths there are to feed / dishes to wash (children included).
 CHORE_TEMPLATES: list[dict[str, Any]] = [

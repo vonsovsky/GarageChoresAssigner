@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from . import store
-from .catalog import size_for
+from .catalog import size_for, spiciness_of
 from .suggestions import build_person_pool, suggest
 from .upstream import upstream
 from .ws import manager
@@ -38,7 +38,9 @@ def build_chore_view(task: dict[str, Any]) -> dict[str, Any]:
     est = task.get("estimated_time_min", 0)
     size = meta.get("size") or size_for(est)
 
-    urgent = bool(meta.get("urgent"))
+    # Urgency comes from 🌶️ in the name (upstream convention), or a near deadline.
+    spiciness = spiciness_of(task.get("name") or "")
+    urgent = spiciness > 0
     deadline = _parse_dt(task.get("deadline"))
     minutes_to_deadline = None
     if deadline:
@@ -70,6 +72,7 @@ def build_chore_view(task: dict[str, Any]) -> dict[str, Any]:
         "created": task.get("created"),
         "size": size,
         "urgent": urgent,
+        "spiciness": spiciness,
         "template_key": meta.get("template_key"),
         "claimers": claimer_views,
         "claimed_count": len(claimer_views),

@@ -13,7 +13,8 @@ class ChoreCreateIn(BaseModel):
     assignment_timeout_min: int = Field(default=15, ge=1, le=1000)
     necessary_capabilities: list[str] = Field(default_factory=list)
     deadline: Optional[str] = None  # ISO 8601
-    urgent: bool = False
+    # urgency = number of 🌶️ (0-3) prepended to the chore name
+    spiciness: int = Field(default=0, ge=0, le=3)
     # optional link back to the preset it was created from
     template_key: Optional[str] = None
     # scale head-count chores (dishes/cooking) by number of people eating

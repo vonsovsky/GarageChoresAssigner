@@ -11,7 +11,9 @@ from ..auth import current_uid, require_uid
 from ..catalog import (
     FUNNY_ACK_MESSAGES,
     SKILLS,
+    SPICY,
     size_for,
+    spiciness_of,
     template_time,
 )
 from ..config import settings
@@ -164,8 +166,14 @@ async def create_chore(body: ChoreCreateIn):
         est = template_time(template, headcount)
         caps = caps or template["necessary_capabilities"]
 
+    # Urgency is encoded as 🌶️ in the name (upstream convention). Prepend the
+    # requested peppers unless the author already typed some into the name.
+    name = body.name
+    if body.spiciness and spiciness_of(name) == 0:
+        name = f"{SPICY * body.spiciness} {name}"
+
     upstream_body = {
-        "name": body.name,
+        "name": name,
         "necessary_workers": body.necessary_workers,
         "estimated_time_min": est,
         "assignment_timeout_min": body.assignment_timeout_min,
@@ -179,7 +187,7 @@ async def create_chore(body: ChoreCreateIn):
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"Upstream create failed: {exc}")
 
-    store.set_chore_meta(task["id"], urgent=body.urgent, size=size_for(est), template_key=body.template_key)
+    store.set_chore_meta(task["id"], size=size_for(est), template_key=body.template_key)
     view = service.build_chore_view(task)
     await service.broadcast_local(
         {"type": "task_created", "chore": view, "suggestions": service.suggestions_for(task["id"])["top"]}

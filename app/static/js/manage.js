@@ -1,7 +1,10 @@
-// Manage page: templates, custom create with urgent + head-count scaling, list.
+// Manage page: templates, custom create with 🌶️ urgency + head-count scaling, list.
 let templates = [];
 let selectedSkills = new Set();
-let urgent = false;
+
+function renderSpiciness(n) {
+  document.getElementById("spiciness-val").textContent = n > 0 ? "🌶️".repeat(n) : "not urgent";
+}
 
 async function init() {
   const [{ templates: tpls }, { skills }] = await Promise.all([
@@ -18,11 +21,8 @@ async function init() {
     sbox.appendChild(chip);
   });
 
-  document.getElementById("urgent").addEventListener("click", (e) => {
-    urgent = !urgent;
-    e.currentTarget.classList.toggle("on", urgent);
-    e.currentTarget.setAttribute("aria-pressed", urgent ? "true" : "false");
-  });
+  const spice = document.getElementById("spiciness");
+  spice.addEventListener("input", (e) => renderSpiciness(+e.currentTarget.value));
   document.getElementById("chore-form").addEventListener("submit", submit);
   document.getElementById("headcount").addEventListener("input", recalcFromTemplate);
 
@@ -79,7 +79,7 @@ async function submit(ev) {
     assignment_timeout_min: parseInt(document.getElementById("timeout").value, 10),
     necessary_capabilities: [...selectedSkills],
     deadline: deadlineRaw ? new Date(deadlineRaw).toISOString() : null,
-    urgent,
+    spiciness: parseInt(document.getElementById("spiciness").value, 10) || 0,
     template_key: document.getElementById("template_key").value || null,
     headcount: parseInt(document.getElementById("headcount").value, 10) || null,
   };
@@ -101,8 +101,10 @@ function resetForm() {
   document.getElementById("template_key").value = "";
   document.getElementById("form-title").textContent = "Create a chore";
   document.getElementById("headcount-wrap").hidden = true;
-  selectedSkills.clear(); urgent = false;
-  document.querySelectorAll("#skills .chip, #urgent").forEach((c) => {
+  selectedSkills.clear();
+  document.getElementById("spiciness").value = 0;
+  renderSpiciness(0);
+  document.querySelectorAll("#skills .chip").forEach((c) => {
     c.classList.remove("on");
     c.setAttribute("aria-pressed", "false");
   });
