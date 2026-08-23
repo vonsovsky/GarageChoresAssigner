@@ -25,6 +25,17 @@ log = logging.getLogger("app")
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
+class RevalidatingStatic(StaticFiles):
+    """Serve static assets with `Cache-Control: no-cache` so browsers always
+    revalidate (cheap 304 when unchanged) and pick up new JS/CSS immediately
+    after a deploy — avoids stale bundles rendering against a changed API."""
+
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
 async def _poll_loop() -> None:
     """Fallback reconcile so tasks/stats/users stay coherent — and connected
     clients stay updated — even if the upstream WebSocket is quiet or an event is
@@ -99,7 +110,7 @@ async def require_auth(request: Request, call_next):
 
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET, same_site="lax")
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("/static", RevalidatingStatic(directory=str(STATIC_DIR)), name="static")
 app.include_router(auth_router)
 app.include_router(page_routes.router)
 app.include_router(api_routes.router)
