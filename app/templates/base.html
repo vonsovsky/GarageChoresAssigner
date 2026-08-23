@@ -12,6 +12,10 @@
 </head>
 <body class="{% block body_class %}{% endblock %}">
   {% block nav %}
+  {# Prefer the tv. subdomain, but fall back to /dashboard on hosts that can't
+     serve a nested subdomain (e.g. *.fly.dev). #}
+  {% set _host = request.url.hostname or "" %}
+  {% set tv_href = "/dashboard" if _host.endswith(".fly.dev") else request.url.scheme ~ "://tv." ~ request.url.netloc %}
   <nav class="topnav">
     <a class="brand" href="/feed"><span class="logo">Garage Trip</span> Chores</a>
     <div class="navlinks">
@@ -19,7 +23,7 @@
       <a href="/leaderboard" class="{{ 'on' if active=='leaderboard' }}">Leaderboard</a>
       <a href="/manage" class="{{ 'on' if active=='manage' }}">Manage</a>
       <a href="/profile" class="{{ 'on' if active=='profile' }}">Profile</a>
-      <a href="{{ request.url.scheme }}://tv.{{ request.url.netloc }}" class="{{ 'on' if active=='dashboard' }}">TV</a>
+      <a href="{{ tv_href }}" class="{{ 'on' if active=='dashboard' }}">TV</a>
     </div>
   </nav>
   {% endblock %}
