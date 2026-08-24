@@ -43,7 +43,8 @@ function renderList(id, chores, emptyMsg) {
       el("span", { class: `badge size-${c.size}` }, `${c.size} · ${fmtMin(c.estimated_time_min)}`),
       c.urgent && !c.completed ? el("span", { class: "badge urgent" }, "URGENT") : null,
       ...(c.necessary_capabilities || []).map((s) => el("span", { class: "badge skill" }, s)),
-      c.completed ? el("span", { class: "badge claimed" }, "✓ done") : null);
+      c.completed ? el("span", { class: "badge claimed" }, "✓ done") : null,
+      c.completed ? el("span", { class: "badge" }, `⏱ ${fmtMin(c.total_time_min) || "0 min"} spent`) : null);
     box.appendChild(el("div", { class: `card chore ${c.urgent && !c.completed ? "urgent" : ""} ${c.completed ? "done" : ""}` },
       el("h3", { style: "margin:0" }, el("a", { href: `/chores/${c.id}`, style: "color:inherit" }, c.name)),
       badges));

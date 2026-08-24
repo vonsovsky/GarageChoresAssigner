@@ -156,8 +156,21 @@ def leaderboard() -> list[dict[str, Any]]:
     return rows
 
 
-def user_detail(discord_id: str) -> dict[str, Any]:
-    """A person's chores: those in progress (on top) and those completed."""
+async def _time_spent(task_id: int, fallback: int) -> int:
+    """Actual time spent on a task from GET /tasks/{id}/stats (total_time_min),
+    falling back to the estimate if the stats call fails or is empty."""
+    try:
+        stats = await upstream.task_stats(task_id)
+    except Exception:  # noqa: BLE001
+        return fallback
+    val = stats.get("total_time_min")
+    return val if val is not None else fallback
+
+
+async def user_detail(discord_id: str) -> dict[str, Any]:
+    """A person's chores: those in progress (on top) and those completed.
+    Completed chores carry `total_time_min` — the real time spent, from
+    /tasks/{id}/stats — not just the estimate."""
     directory = _person_directory()
     info = directory.get(discord_id, {"name": discord_id, "handle": ""})
     task_ids = _claims_by_user().get(discord_id, [])
@@ -169,7 +182,11 @@ def user_detail(discord_id: str) -> dict[str, Any]:
         if not task or task.get("cancelled"):
             continue
         view = build_chore_view(task)
-        (performed if task.get("completed") else performing).append(view)
+        if task.get("completed"):
+            view["total_time_min"] = await _time_spent(task_id, view["estimated_time_min"])
+            performed.append(view)
+        else:
+            performing.append(view)
 
     performing.sort(key=lambda v: (not v["urgent"], v.get("created") or ""))
     performed.sort(key=lambda v: v.get("completed") or "", reverse=True)
@@ -180,7 +197,7 @@ def user_detail(discord_id: str) -> dict[str, Any]:
         "handle": info.get("handle") or "",
         "performing": performing,
         "performed": performed,
-        "time_spent_min": sum(v["estimated_time_min"] for v in performed),
+        "time_spent_min": sum(v["total_time_min"] for v in performed),
     }
 
 

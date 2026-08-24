@@ -164,9 +164,14 @@ class UpstreamClient:
         resp.raise_for_status()
 
     async def task_stats(self, task_id: int) -> dict[str, Any]:
-        resp = await self._http.get(f"/tasks/{task_id}/stats")
-        resp.raise_for_status()
-        return resp.json()
+        # The stats endpoint occasionally returns an empty body from a replica;
+        # retry once before giving up so callers get real numbers.
+        for _ in range(2):
+            resp = await self._http.get(f"/tasks/{task_id}/stats")
+            resp.raise_for_status()
+            if resp.content:
+                return resp.json()
+        return {}
 
     # -- WebSocket consumer --------------------------------------------------
 

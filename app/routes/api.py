@@ -169,7 +169,7 @@ async def leaderboard():
 
 @router.get("/users/{user_id:path}")
 async def user_detail(user_id: str):
-    return service.user_detail(user_id)
+    return await service.user_detail(user_id)
 
 
 # --- chores -----------------------------------------------------------------
