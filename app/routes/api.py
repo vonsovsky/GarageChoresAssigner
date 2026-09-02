@@ -321,6 +321,9 @@ async def report_chore_time(task_id: int, body: TimeReportIn):
         await upstream.report_time(task_id, body.discord_id, body.time_spent_min)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"Upstream time report failed: {exc}")
+    # The per-user aggregate (/stats) changes too, so refresh the cache now
+    # rather than waiting for the 30s poll — keeps the leaderboard in sync.
+    await upstream.refresh_stats()
     await service.broadcast_local({"type": "workload_updated", "discord_id": body.discord_id})
     return {"ok": True, "time_spent_min": body.time_spent_min}
 
