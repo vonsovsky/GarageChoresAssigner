@@ -24,6 +24,7 @@ from ..models import (
     ChoreCreateIn,
     ManualWorkIn,
     TemplateIn,
+    TimeReportIn,
 )
 from ..suggestions import build_person_pool
 from ..upstream import upstream
@@ -311,6 +312,17 @@ async def unassign_chore(task_id: int, body: AssignIn):
          "suggestions": service.suggestions_for(task_id)["top"]}
     )
     return {"chore": view}
+
+
+@router.post("/chores/{task_id}/time")
+async def report_chore_time(task_id: int, body: TimeReportIn):
+    """Override the time a person spent on a chore (upstream /tasks/{id}/time)."""
+    try:
+        await upstream.report_time(task_id, body.discord_id, body.time_spent_min)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail=f"Upstream time report failed: {exc}")
+    await service.broadcast_local({"type": "workload_updated", "discord_id": body.discord_id})
+    return {"ok": True, "time_spent_min": body.time_spent_min}
 
 
 @router.post("/chores/{task_id}/done")

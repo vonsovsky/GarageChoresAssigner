@@ -163,6 +163,16 @@ class UpstreamClient:
         resp = await self._http.post(f"/tasks/{task_id}/schedule")
         resp.raise_for_status()
 
+    async def report_time(self, task_id: int, user_id: str, time_spent_min: int) -> dict[str, Any]:
+        """Set (upsert) the time a user spent on a task — the upstream override
+        for `total_time_min` reported by /tasks/{id}/stats."""
+        resp = await self._http.post(
+            f"/tasks/{task_id}/time",
+            json={"user_id": user_id, "time_spent_min": time_spent_min},
+        )
+        resp.raise_for_status()
+        return resp.json() if resp.content else {}
+
     async def task_stats(self, task_id: int) -> dict[str, Any]:
         # The stats endpoint occasionally returns an empty body from a replica;
         # retry once before giving up so callers get real numbers.

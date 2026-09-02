@@ -4,7 +4,7 @@ const uid = window.USER_ID;
 async function init() {
   await load();
   connectWS((msg) => {
-    if (["snapshot", "task_done", "task_claimed", "task_created", "profile_updated"].includes(msg.type)) load();
+    if (["snapshot", "task_done", "task_claimed", "task_created", "profile_updated", "workload_updated"].includes(msg.type)) load();
   });
 }
 
@@ -44,11 +44,24 @@ function renderList(id, chores, emptyMsg) {
       c.urgent && !c.completed ? el("span", { class: "badge urgent" }, "URGENT") : null,
       ...(c.necessary_capabilities || []).map((s) => el("span", { class: "badge skill" }, s)),
       c.completed ? el("span", { class: "badge claimed" }, "✓ done") : null,
-      c.completed ? el("span", { class: "badge" }, `⏱ ${fmtMin(c.total_time_min) || "0 min"} spent`) : null);
+      c.completed ? el("span", { class: "badge" }, `⏱ ${fmtMin(c.total_time_min) || "0 min"} spent`) : null,
+      c.completed ? el("button", { class: "ghost small", title: "Override time spent", onclick: () => editTime(c) }, "✎") : null);
     box.appendChild(el("div", { class: `card chore ${c.urgent && !c.completed ? "urgent" : ""} ${c.completed ? "done" : ""}` },
       el("h3", { style: "margin:0" }, el("a", { href: `/chores/${c.id}`, style: "color:inherit" }, c.name)),
       badges));
   });
+}
+
+async function editTime(c) {
+  const raw = prompt(`Time ${c.name} — minutes spent:`, c.total_time_min);
+  if (raw == null) return;                       // cancelled
+  const mins = parseInt(raw, 10);
+  if (isNaN(mins) || mins < 0) { showError(new Error("Enter a non-negative number of minutes.")); return; }
+  try {
+    await API.post(`/api/chores/${c.id}/time`, { discord_id: uid, time_spent_min: mins });
+    showToast("Time updated ✓");
+    await load();
+  } catch (e) { showError(e); }
 }
 
 init();

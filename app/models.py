@@ -40,6 +40,11 @@ class MergeIn(BaseModel):
     to_id: str = Field(min_length=1)    # canonical identity to keep
 
 
+class TimeReportIn(BaseModel):
+    discord_id: str = Field(min_length=1)   # whose time on the chore is being set
+    time_spent_min: int = Field(ge=0, le=100000)
+
+
 class TemplateIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     necessary_workers: int = Field(default=1, ge=1, le=20)
